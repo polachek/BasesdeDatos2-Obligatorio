@@ -1,3 +1,14 @@
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+
+/*########################################################################*/
+/*                       CREACIÓN DE TABLAS								  */
+/*########################################################################*/
+
 /* Creacion de la BD */
 CREATE DATABASE BD_INVESTIGACIONES
 go
@@ -67,3 +78,75 @@ create Table Lugares (
 	universidad varchar(50) )
 go
 	
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+
+/*########################################################################*/
+/*              ALTERACIONES PARA AGREGAR RESTRICCIONES      			  */
+/*########################################################################*/
+
+/* UNIVERSIDAD */
+ALTER TABLE Universidad
+ALTER COLUMN nombre varchar(50) NOT NULL
+
+ALTER TABLE Universidad
+ADD CONSTRAINT Nombre_PK PRIMARY KEY (nombre)
+
+/*########################################################################*/
+
+/* INVESTIGADOR */
+ALTER TABLE Investigador
+ALTER COLUMN idInvestigador INT NOT NULL
+
+ALTER TABLE Investigador
+ADD CONSTRAINT Investigador_PK PRIMARY KEY (idInvestigador)
+
+/*########################################################################*/
+
+/* TRABAJO */
+ALTER TABLE Trabajo
+ADD CONSTRAINT Trabajo_PK PRIMARY KEY (idTrab)
+
+/*########################################################################*/
+
+/* TAGS */
+ALTER TABLE Tags
+ALTER COLUMN idTag INT NOT NULL
+
+ALTER TABLE Tags
+ADD CONSTRAINT Tags_PK PRIMARY KEY (idTag)
+
+/*########################################################################*/
+
+/* TTAGS */
+ALTER TABLE TTags
+ALTER COLUMN idTrab INT NOT NULL
+
+ALTER TABLE TTags
+ALTER COLUMN idTag INT NOT NULL
+
+ALTER TABLE TTAGS 
+ALTER COLUMN idTrab INT;
+
+ALTER TABLE TTags
+ADD CONSTRAINT TTags_PK PRIMARY KEY (idTrab, idTag)
+
+ALTER TABLE TTags
+ADD CONSTRAINT TTags_FK1 FOREIGN KEY (idTrab)
+REFERENCES Trabajo
+
+/*########################################################################*/
+
+/* TAUTORES */
+ALTER TABLE TAutores
+ADD CONSTRAINT TAutores_PK PRIMARY KEY (idTrab, idInvestigador)
+
+/*########################################################################*/
+
+/* REFERENCIAS */
+ALTER TABLE Referencias
+ADD CONSTRAINT Referencias_PK PRIMARY KEY (idTrab, idTrabReferenciado)
