@@ -91,25 +91,45 @@ go
 
 /* UNIVERSIDAD */
 ALTER TABLE Universidad
-ALTER COLUMN nombre varchar(50) NOT NULL
-
-ALTER TABLE Universidad
 ADD CONSTRAINT Nombre_PK PRIMARY KEY (nombre)
 
 /*########################################################################*/
 
 /* INVESTIGADOR */
 ALTER TABLE Investigador
-ALTER COLUMN idInvestigador INT NOT NULL
+DROP COLUMN idInvestigador
+
+ALTER TABLE Investigador
+ADD idInvestigador INT NOT NULL IDENTITY(1,1)
+
+ALTER TABLE Investigador
+ADD idUniversidad VARCHAR(100) NOT NULL
 
 ALTER TABLE Investigador
 ADD CONSTRAINT Investigador_PK PRIMARY KEY (idInvestigador)
+
+ALTER TABLE Investigador
+ADD CONSTRAINT Investigador_FK FOREIGN KEY (idUniversidad)
+REFERENCES Universidad
+
+ALTER TABLE Investigador
+ADD CONSTRAINT NivelInv_CH CHECK (nivelInvestig IN ('EGrado', 'EMaestria', 'EDoctorado', 'Doctor'))
+
+ALTER TABLE Investigador
+ADD UNIQUE (Mail)
+
+ALTER TABLE Investigador
+ALTER COLUMN cantTrabPub INT NOT NULL
 
 /*########################################################################*/
 
 /* TRABAJO */
 ALTER TABLE Trabajo
 ADD CONSTRAINT Trabajo_PK PRIMARY KEY (idTrab)
+
+ALTER TABLE Trabajo
+ADD CONSTRAINT Trabajo_FK FOREIGN KEY (lugarPublic)
+REFERENCES Lugares
 
 /*########################################################################*/
 
@@ -139,14 +159,43 @@ ALTER TABLE TTags
 ADD CONSTRAINT TTags_FK1 FOREIGN KEY (idTrab)
 REFERENCES Trabajo
 
+ALTER TABLE TTags
+ADD CONSTRAINT TTags_FK2 FOREIGN KEY (idTag)
+REFERENCES Tags
+
 /*########################################################################*/
 
 /* TAUTORES */
 ALTER TABLE TAutores
+ALTER COLUMN idTrab INT NOT NULL
+
+ALTER TABLE TAutores
 ADD CONSTRAINT TAutores_PK PRIMARY KEY (idTrab, idInvestigador)
+
+ALTER TABLE TAutores
+ADD CONSTRAINT TAutores_FK1 FOREIGN KEY (idTrab)
+REFERENCES Trabajo
+
+ALTER TABLE TAutores
+ADD CONSTRAINT TAutores_FK2 FOREIGN KEY (idInvestigador)
+REFERENCES Trabajo
 
 /*########################################################################*/
 
 /* REFERENCIAS */
 ALTER TABLE Referencias
+ALTER COLUMN idTrab INT NOT NULL
+
+ALTER TABLE Referencias
 ADD CONSTRAINT Referencias_PK PRIMARY KEY (idTrab, idTrabReferenciado)
+
+ALTER TABLE Referencias
+ADD CONSTRAINT Referencias_FK FOREIGN KEY (idTrab)
+REFERENCES Trabajo
+
+/*########################################################################*/
+
+/* LUGARES */
+ALTER TABLE Lugares
+ADD CONSTRAINT Lugares_FK FOREIGN KEY (universidad)
+REFERENCES Universidad
