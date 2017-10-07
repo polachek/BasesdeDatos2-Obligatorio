@@ -91,7 +91,10 @@ go
 
 /* UNIVERSIDAD */
 ALTER TABLE Universidad
-ADD CONSTRAINT Nombre_PK PRIMARY KEY (nombre)
+DROP nombre 
+
+ALTER TABLE Universidad
+ADD nombre VARCHAR(100) PRIMARY KEY 
 
 /*########################################################################*/
 
