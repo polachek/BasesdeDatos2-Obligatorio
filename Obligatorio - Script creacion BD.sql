@@ -200,5 +200,8 @@ REFERENCES Trabajo
 
 /* LUGARES */
 ALTER TABLE Lugares
+ALTER COLUMN universidad VARCHAR(100)
+
+ALTER TABLE Lugares
 ADD CONSTRAINT Lugares_FK FOREIGN KEY (universidad)
 REFERENCES Universidad
