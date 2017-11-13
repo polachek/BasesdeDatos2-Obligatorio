@@ -66,4 +66,15 @@ create Table Lugares (
 	link varchar(200), 
 	universidad varchar(50) )
 go
+
+
+
+/*****************************
+******************************
+ 2. Creación de índices que considere puedan ser útiles para optimizar las consultas
+ (según criterio establecido en el curso)
+ ********************************
+*********************************/
+/* CREATE INDEX <nombre-índice>ON <nombre-tabla>(columna1 [, columna2, ...]) */
+
 	

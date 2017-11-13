@@ -79,11 +79,14 @@ go
 /*########################################################################*/
 
 /* UNIVERSIDAD */
-ALTER TABLE Universidad
-DROP nombre 
 
 ALTER TABLE Universidad
-ADD nombre VARCHAR(100) PRIMARY KEY 
+  ALTER COLUMN nombre VARCHAR(100) NOT NULL;
+
+ALTER TABLE Universidad
+ add Constraint pk_nombre Primary key(nombre)
+
+
 
 /*-------------------------------------------------------------------------*/
 
@@ -142,7 +145,7 @@ ALTER TABLE TTags
 ALTER COLUMN idTag INT NOT NULL
 
 ALTER TABLE TTAGS 
-ALTER COLUMN idTrab INT;
+ALTER COLUMN idTrab INT NOT NULL;
 
 ALTER TABLE TTags
 ADD CONSTRAINT TTags_PK PRIMARY KEY (idTrab, idTag)
@@ -208,3 +211,10 @@ REFERENCES Universidad
  (según criterio establecido en el curso)*/
 
 /* CREATE INDEX <nombre-índice>ON <nombre-tabla>(columna1 [, columna2, ...]) */
+CREATE INDEX i_investigador_uni ON Investigador(idUniversidad);
+CREATE INDEX i_lugares_uni ON Lugares(universidad);
+CREATE INDEX i_autores_investigador ON TAutores(idInvestigador);
+CREATE INDEX i_trabajo_lugar ON Trabajo(lugarPublic);
+CREATE INDEX i_ttags_tags ON TTags(idTag);
+
+
