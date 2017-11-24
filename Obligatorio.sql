@@ -87,6 +87,8 @@ go
 ALTER TABLE Universidad
  add Constraint pk_nombre Primary key(nombre)
 
+ ALTER TABLE Universidad Add telefono varchar(20) not null;
+
 
 
 /*-------------------------------------------------------------------------*/
@@ -123,7 +125,30 @@ ALTER COLUMN cantTrabPub INT NOT NULL
 
 /* TRABAJO */
 ALTER TABLE Trabajo
+DROP COLUMN idTrab
+go
+
+ALTER TABLE Trabajo
+ADD idTrab varchar(10) not null;
+go
+
+ALTER TABLE Trabajo
+ALTER COLUMN descripTrab VARCHAR(200)
+go
+
+ALTER TABLE Trabajo
+ADD CONSTRAINT tipoTrab_check CHECK (tipoTrab IN ('poster', 'articulo', 'capitulo', 'otro'))
+
+
+ALTER TABLE Trabajo
+ADD CONSTRAINT idTrab_check CHECK (idTrab like '[PACO][1-9]+')
+
+ALTER TABLE Trabajo
 ADD CONSTRAINT Trabajo_PK PRIMARY KEY (idTrab)
+
+ALTER TABLE Trabajo
+ALTER COLUMN lugarPublic int not null
+go
 
 ALTER TABLE Trabajo
 ADD CONSTRAINT Trabajo_FK FOREIGN KEY (lugarPublic)
@@ -136,22 +161,13 @@ ALTER TABLE Tags
 ALTER COLUMN idTag INT NOT NULL
 go
 
+
 ALTER TABLE Tags
 ADD CONSTRAINT Tags_PK PRIMARY KEY (idTag)
 
 /*-------------------------------------------------------------------------*/
 
 /* TTAGS */
-ALTER TABLE TTags
-ALTER COLUMN idTrab INT NOT NULL
-
-ALTER TABLE TTags
-ALTER COLUMN idTag INT NOT NULL
-
-ALTER TABLE TTAGS 
-ALTER COLUMN idTrab INT NOT NULL;
-go
-
 ALTER TABLE TTags
 ADD CONSTRAINT TTags_PK PRIMARY KEY (idTrab, idTag)
 
@@ -167,10 +183,6 @@ REFERENCES Tags
 
 /* TAUTORES */
 ALTER TABLE TAutores
-ALTER COLUMN idTrab INT NOT NULL
-go
-
-ALTER TABLE TAutores
 ADD CONSTRAINT TAutores_PK PRIMARY KEY (idTrab, idInvestigador)
 
 ALTER TABLE TAutores
@@ -179,34 +191,58 @@ REFERENCES Trabajo
 
 ALTER TABLE TAutores
 ADD CONSTRAINT TAutores_FK2 FOREIGN KEY (idInvestigador)
-REFERENCES Trabajo
+REFERENCES Investigador
+
+ALTER TABLE TAutores
+ALTER COLUMN rolinvestig varchar(20);
+go
+
+ALTER TABLE TAutores
+ADD CONSTRAINT rolinvestig_check CHECK (rolinvestig IN ('autor-ppal', 'autor-sec', 'autor-director'))
+
+
+
+
 
 /*-------------------------------------------------------------------------*/
 
 /* REFERENCIAS */
 ALTER TABLE Referencias
-ALTER COLUMN idTrab INT NOT NULL
-go
-
-ALTER TABLE Referencias
 ADD CONSTRAINT Referencias_PK PRIMARY KEY (idTrab, idTrabReferenciado)
 
 ALTER TABLE Referencias
-ADD CONSTRAINT Referencias_FK FOREIGN KEY (idTrab)
+ADD CONSTRAINT Referencias_FK_Trab FOREIGN KEY (idTrab)
+REFERENCES Trabajo
+
+ALTER TABLE Referencias
+ADD CONSTRAINT Referencias_FK_TrabRef FOREIGN KEY (idTrabReferenciado)
 REFERENCES Trabajo
 
 /*-------------------------------------------------------------------------*/
 
 /* LUGARES */
 ALTER TABLE Lugares
+ALTER COLUMN nombre varchar(250) not null;
+
+ALTER TABLE Lugares
+ADD CONSTRAINT nombre_uniq unique (nombre);
+
+ALTER TABLE Lugares
+ADD tipoLugar varchar(10) not null;
+go
+
+ALTER TABLE Lugares
+ADD CONSTRAINT tipoLugar_check CHECK (tipoLugar IN ('Congresos', 'Revistas', 'Libros'))
+
+ALTER TABLE Lugares
+ADD CONSTRAINT nivelLugar_check CHECK (nivelLugar BETWEEN 1 and 4);
+
+ALTER TABLE Lugares
 ALTER COLUMN universidad VARCHAR(100)
 
 ALTER TABLE Lugares
 ADD CONSTRAINT Lugares_FK FOREIGN KEY (universidad)
 REFERENCES Universidad
-
-
-
 
 
 
