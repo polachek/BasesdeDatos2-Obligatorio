@@ -1,0 +1,17 @@
+
+TRABAJO
+Controlar que Tipo de trabajo = IdTrabajo
+Crear Secuencial
+INVESTIGADOR
+Trigger no actualizar datos de Universidad
+
+TAGS
+Trigger para controlar secuenciador impar
+Si id es 0 => suma 1, sino suma 2
+
+REFERENCIAS
+Trigger para controlar que un trabajo no se referencie a si mismo
+
+LUGARES
+Trigger para controlar que si es un CONGRESOS => la FechaFin no puede ser nulo
+Controlar que año/mes/dia no sean posteriores al año/mes/dìa de la fecha actual

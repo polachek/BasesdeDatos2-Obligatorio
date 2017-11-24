@@ -395,7 +395,238 @@ VALUES ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '45129685', 'Lic
 INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,idUniversidad)
 VALUES ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '45129685', 'Licenciatura en Matemáticas', 'EDoctor','Universidad de Michigan')
 
-/* Caso a ser rechazado por no ingresar nombre unico*/
+/* Caso a ser rechazado por no ingresar mail unico*/
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '98765432', 'Dcotor en Medicina', 'EDoctor', 4,'Udelar')
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*                              Tabla TRABAJO                               */
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/* Datos OK */
+INSERT INTO Trabajo
+VALUES('Investigacion GARZA CUCA', 'La garza cuca o también denominada garza mora (Ardea cocoi) es un ave nativa del Centro y Sudamérica, se estudia su ambiente y entorno', 'articulo', '2016-04-03', 'https://www.infoanimales.com/informacion-sobre-la-garza-cuca',1,'P1')
+
+INSERT INTO Trabajo
+VALUES('Venado de campo', 'Investigacion sobre el venado de campo, uno de los integrantes más característicos de la fauna uruguaya', 'capitulo', '2017-02-01', 'http://blogs.ceibal.edu.uy/formacion/colecciones-de-recursos/venado-de-campo/',2,'A1')
+
+INSERT INTO Trabajo
+VALUES('Investigacion sobre el Agua', 'El agua es un bien y un recurso cada vez mas escaso, que debe ser valorado, protegido y recuperado', 'poster,', '2017-05-17', 'https://es.slideshare.net/sssanchezayelen/investigacin-sobre-el-agua',3,'P2')
+
+INSERT INTO Trabajo
+VALUES('Investigacion sobre las drogas', 'La drogadicción es una enfermedad que consiste en la dependencia de sustancias que afectan el sistema nervioso central y las funciones cerebrales', 'articulo,', '2017-05-17', 'https://www.monografias.com/docs/Investigacion-sobre-las-drogas-FKJQBHKYMZ',4,'A2')
+
+INSERT INTO Trabajo
+VALUES('Investigacion sobre medio ambiente ', 'El análisis de lo ambiental desde la perspectiva de lo social', 'Otro,', '2017-08-20', 'http://cis.ufro.cl/index.php?option=com_content&view=article&id=45&Itemid=34',5,'O1')
+
+INSERT INTO Trabajo
+VALUES('Investigacion sobre Cultura maya ', 'La civilización maya es sin duda la más fascinante de las antiguas culturas americanas. Ciertamente, en ninguna de ellas se halla un esplendor artístico e intelectual parangonable al alcanzado por la cultura maya', 'Otro,', '2017-04-28', 'https://www.biografiasyvidas.com/historia/cultura_maya.htm',6,'O2')
+
+/*Datos a rechazar*/
+/* Caso a ser rechazado por Descripcion > 200 Caracteres */
+INSERT INTO Trabajo
+VALUES('Investigacion de como hacer las cosas mal', 'Nor hence hoped her after other known defer his. For county now sister engage had season better had waited. Occasional mrs interested far expression acceptance. Day either mrs talent pulled men rather 201', 'articulo', '2016-04-03', null,1,'P3')
+
+/* Caso a ser rechazado por tipoTrab no permitido */
+INSERT INTO Trabajo
+VALUES('Investigacion sobre el mal hacer', 'Investigacion sobre cuando las cosas se macen hal', 'propaganda', '2016-04-03', 'https://www.google.com.uy',1,'P4')
+
+/* Caso a ser rechazado por Lugar = null */
+INSERT INTO Trabajo
+VALUES('Investigacion sobre el lugar nulo', 'Investigacion sobre la nulinidad del lugar', 'articulo', '2016-04-03', 'https://www.google.com.uy',null,'A4')
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*                              Tabla TAGS                                  */
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*Datos OK*/
+INSERT INTO Tags(palabra)
+VALUES ('garza')
+
+INSERT INTO Tags(palabra)
+VALUES ('cuca')
+
+INSERT INTO Tags(palabra)
+VALUES ('venado')
+
+INSERT INTO Tags(palabra)
+VALUES ('campo')
+
+INSERT INTO Tags(palabra)
+VALUES ('fauna')
+
+INSERT INTO Tags(palabra)
+VALUES ('animales')
+
+INSERT INTO Tags(palabra)
+VALUES ('silvestre')
+
+INSERT INTO Tags(palabra)
+VALUES ('agua')
+
+INSERT INTO Tags(palabra)
+VALUES ('ambiente')
+
+INSERT INTO Tags(palabra)
+VALUES ('ecología')
+
+INSERT INTO Tags(palabra)
+VALUES ('drogas')
+
+INSERT INTO Tags(palabra)
+VALUES ('adicciones')
+
+INSERT INTO Tags(palabra)
+VALUES ('cultura')
+
+INSERT INTO Tags(palabra)
+VALUES ('mayas')
+
+/*Datos a rechazar*/
+/* Caso a ser rechazado por identificador par */
+INSERT INTO Tags(idtag, palabra)
+VALUES (2,'ruinas')
+
+/* Caso a ser rechazado por palabra NULL */
+INSERT INTO Tags(palabra)
+VALUES (NULL)
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*                              Tabla TTAGS                                  */
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*Datos OK*/
+INSERT INTO TTags
+VALUES ('P1',1)
+
+INSERT INTO TTags
+VALUES ('P1',3)
+
+INSERT INTO TTags
+VALUES ('A1',5)
+
+INSERT INTO TTags
+VALUES ('A1',7)
+
+INSERT INTO TTags
+VALUES ('A1',9)
+
+INSERT INTO TTags
+VALUES ('P2',15)
+
+INSERT INTO TTags
+VALUES ('P2',17)
+
+INSERT INTO TTags
+VALUES ('P2',19)
+
+INSERT INTO TTags
+VALUES ('A2',21)
+
+INSERT INTO TTags
+VALUES ('A2',23)
+
+INSERT INTO TTags
+VALUES ('O1',17)
+
+INSERT INTO TTags
+VALUES ('O2',25)
+
+INSERT INTO TTags
+VALUES ('O2',27)
+
+/*Datos a rechazar*/
+/*Caso a ser rechazado por PK duplicado*/
+INSERT INTO TTags
+VALUES ('O2',27)
+
+/*Caso a ser rechazado por IdTag inexistente*/
+INSERT INTO TTags
+VALUES ('O2',28)
+
+/*Caso a ser rechazado por IdTrab inexistente*/
+INSERT INTO TTags
+VALUES ('Z15',27)
+
+/*Caso a ser rechazado por IdTrab null*/
+INSERT INTO TTags(idTag)
+VALUES (27)
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*                           Tabla TAUTORES                                 */
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+INSERT INTO TAutores
+VALUES('P1',1,'autor-ppal')
+
+INSERT INTO TAutores
+VALUES('P1',5,'autor-sec')
+
+INSERT INTO TAutores
+VALUES('P2',2,'autor-director')
+
+INSERT INTO TAutores
+VALUES('01',2,'autor-ppal')
+
+INSERT INTO TAutores
+VALUES('02',3,'autor-director')
+
+INSERT INTO TAutores
+VALUES('A1',4,'autor-ppal')
+
+INSERT INTO TAutores
+VALUES('A2',6,'autor-ppal')
+
+INSERT INTO TAutores
+VALUES('A2',9,'autor-sec')
+
+INSERT INTO TAutores
+VALUES('A2',9,'autor-sec')
+
+INSERT INTO TAutores
+VALUES('A2',8,'autor-director')
+
+/*Datos a rechazar*/
+/*Caso a ser rechazado por PK duplicada*/
+INSERT INTO TAutores
+VALUES('A2',8,'autor-sec')
+
+/*Caso a ser rechazado por IdTrab null*/
+INSERT INTO TAutores(idInvestigador,rolinvestig)
+VALUES(8,'autor-director')
+
+/*Caso a ser rechazado por IdInvestigador null*/
+INSERT INTO TAutores(idTrab,rolinvestig)
+VALUES('A1','autor-director')
+
+/*Caso a ser rechazado por rol fuera de rango*/
+INSERT INTO TAutores(idTrab,idInvestigador,rolinvestig)
+VALUES('A1',7,'editor')
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*                      Tabla REFERENCIAS                                  */
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/* Datos OK */
+INSERT INTO Referencias
+VALUES('P2','O1')
+
+INSERT INTO Referencias
+VALUES('P1','A1')
+
+/*Datos a rechazar*/
+/* Caso a ser rechazado por: idTrab = null */
+INSERT INTO Referencias
+VALUES(null,'A1')
+
+/* Caso a ser rechazado por: idTrabReferenciado = null */
+INSERT INTO Referencias
+VALUES('O2',null)
+
+/* Caso a ser rechazado por: se referencia asimismo  */
+/* REGULAR CON TRIGGER
+INSERT INTO Referencias
+VALUES('O2','O2')
+*/
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                           Tabla LUGARES                                  */
