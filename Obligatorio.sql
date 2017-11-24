@@ -113,7 +113,7 @@ ADD CONSTRAINT Investigador_FK FOREIGN KEY (idUniversidad)
 REFERENCES Universidad
 
 ALTER TABLE Investigador
-ADD CONSTRAINT NivelInv_CH CHECK (nivelInvestig IN ('EGrado', 'EMaestria', 'EDoctorado', 'Doctor'))
+ADD CONSTRAINT NivelInv_CH CHECK (nivelInvestig IN ('EGrado', 'EMaestria', 'EDoctor', 'Doctor'))
 
 ALTER TABLE Investigador
 ADD UNIQUE (Mail)
@@ -139,10 +139,13 @@ go
 ALTER TABLE Trabajo
 ADD CONSTRAINT tipoTrab_check CHECK (tipoTrab IN ('poster', 'articulo', 'capitulo', 'otro'))
 
+/*
+
+=> IMPLEMENTAR TRIGGER
 
 ALTER TABLE Trabajo
 ADD CONSTRAINT idTrab_check CHECK (idTrab like '[PACO][1-9]+')
-
+*/
 ALTER TABLE Trabajo
 ADD CONSTRAINT Trabajo_PK PRIMARY KEY (idTrab)
 
@@ -238,11 +241,24 @@ ALTER TABLE Lugares
 ADD CONSTRAINT nivelLugar_check CHECK (nivelLugar BETWEEN 1 and 4);
 
 ALTER TABLE Lugares
-ALTER COLUMN universidad VARCHAR(100)
+ALTER COLUMN universidad VARCHAR(100) NOT NULL
 
 ALTER TABLE Lugares
 ADD CONSTRAINT Lugares_FK FOREIGN KEY (universidad)
 REFERENCES Universidad
+
+ALTER TABLE Lugares
+ADD CONSTRAINT mes_check CHECK (mes BETWEEN 1 and 12)
+
+ALTER TABLE Lugares
+ADD CONSTRAINT diaI_check CHECK (diaIni BETWEEN 1 and 31)
+
+ALTER TABLE Lugares
+ADD CONSTRAINT diaF_check CHECK (diaFin BETWEEN 1 and 31)
+
+ALTER TABLE Lugares
+ADD CONSTRAINT año_check CHECK (año BETWEEN 1900 and YEAR( GETDATE()));
+
 
 
 
@@ -261,3 +277,184 @@ CREATE INDEX i_trabajo_lugar ON Trabajo(lugarPublic);
 CREATE INDEX i_ttags_tags ON TTags(idTag);
 
 
+/*########################################################################*/
+/*                              PARTE 3                      			  */
+/*########################################################################*/
+
+/* 3. Ingreso de un juego completo de datos de prueba (será más valorada la calidad de los datos
+más que la cantidad. El mismo debería incluir ejemplos que deban ser rechazados por no
+cumplir con las restricciones implementadas.*/
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*                           Tabla UNIVERSIDAD                              */
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*Datos OK*/
+INSERT INTO Universidad
+VALUES ('Udelar', 'Uruguay', 'Montevideo', '29009999')
+
+INSERT INTO Universidad
+VALUES ('ORT', 'Uruguay', 'Montevideo', '27007777')
+
+INSERT INTO Universidad
+VALUES ('UCUDAL', 'Uruguay', 'Montevideo', '24004444')
+
+INSERT INTO Universidad
+VALUES ('UM', 'Uruguay', 'Montevideo', '26006666')
+
+INSERT INTO Universidad
+VALUES ('Universidad de Palermo', 'Argentina', 'Buenos Aires', '44116666')
+
+INSERT INTO Universidad
+VALUES ('UBA', 'Argentina', 'Buenos Aires', '44110000')
+
+INSERT INTO Universidad
+VALUES ('Universidad de Córdoba', 'Argentina', 'Córdoba', '45000000')
+
+INSERT INTO Universidad
+VALUES ('Universidad de Brasilia', 'Brasil', 'Brasilia', '62501253')
+
+INSERT INTO Universidad
+VALUES ('Universidad Federal de Alagoas', 'Brasil', 'Alagoas', '78514569')
+
+INSERT INTO Universidad
+VALUES ('Universidad de Amazonas', 'Brasil', 'Amazonas', '35358978')
+
+/*Datos a rechazar*/
+/* Caso a ser rechazado por contener PK duplicada*/
+INSERT INTO Universidad
+VALUES ('Udelar', 'Argentina', 'Buenos Aires', '44114444')
+
+/* Caso a ser rechazado por pais = NULL*/
+INSERT INTO Universidad
+VALUES ('Nueva Universidad', NULL, 'Buenos Aires', '44554455')
+
+/* Caso a ser rechazado por ciudad = NULL*/
+INSERT INTO Universidad
+VALUES ('Universidad del Nuevo Mundo', 'Uruguay', NULL, '55445544')
+
+/* Caso a ser rechazado por telefono = NULL*/
+INSERT INTO Universidad (nombre, pais, ciudad)
+VALUES ('Universidad Cornell', 'Uruguay', 'Montevideo')
+
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*                           Tabla INVESTIGADOR                             */
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/*Datos OK*/
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('Marcelo López', 'mlopez@investigadores.com.uy', '098999999', 'Ingeniería Química', 'EGrado', 5,'Udelar')
+
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('Laura Marquisio', 'lmarqui@investigadores.com.uy', '098111111', 'Licenciatura en Relaciones Internacionales', 'EMaestria', 1,'UM')
+
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('Fabián Méndez', 'fmendez@investigadores.com.uy', '095951135', 'Licenciatura en Economía', 'EMaestria', 3,'Udelar')
+
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('Silvia Luque', 'sluque@investigadores.com.uy', '096457215', 'Licenciatura en Economía', 'EDoctor', 9,'Udelar')
+
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('Silvio Duarte', 'sduarte@investigadores.com.uy', '099485245', 'Licenciatura en Sistemas', 'Doctor', 15,'Udelar')
+
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('Walter Clitish', 'wclitish@investigadores.com.uy', '099123456', 'Licenciatura en Letras', 'EDoctor', 12,'Udelar')
+
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('Maicol Uriarte', 'muriarte@investigadores.com.uy', '15648524', 'Licenciatura en Bellas Artes', 'EMaestria', 9,'UBA')
+
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('Marianela Ifrán', 'mifran@investigadores.com.uy', '15677425', 'Ingeniería Naval', 'EGrado', 1,'Universidad de Córdoba')
+
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('Linda Cibils', 'lcibils@investigadores.com.uy', '48579568', 'Licenciatura en Ciencias Biológicas', 'EDoctor', 5,'Universidad de Amazonas')
+
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '45129685', 'Licenciatura en Matemáticas', 'EDoctor', 5,'Universidad Federal de Alagoas')
+
+
+/*Datos a rechazar*/
+/* Caso a ser rechazado por ingresar idInvestigador */
+INSERT INTO Investigador (idInvestigador,nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES (365,'Marcio Avellanal', 'mavellanal@investigadores.com.uy', '45129685', 'Licenciatura en Matemáticas', 'EDoctor', 5,'Universidad Federal de Alagoas')
+
+/* Caso a ser rechazado por ingresar Universidad inexistente */
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '45129685', 'Licenciatura en Matemáticas', 'EDoctor', 5,'Universidad de Michigan')
+
+/* Caso a ser rechazado por no ingresar nombre*/
+INSERT INTO Investigador (mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
+VALUES ('mavellanal@investigadores.com.uy', '45129685', 'Licenciatura en Matemáticas', 'EDoctor', 5,'Universidad de Michigan')
+
+/* Caso a ser rechazado por no ingresar nivelInvestig*/
+INSERT INTO Investigador (nombre, mail, telefono, carrera,cantTrabPub,idUniversidad)
+VALUES ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '45129685', 'Licenciatura en Matemáticas', 5,'Universidad de Michigan')
+
+/* Caso a ser rechazado por no ingresar cantTrabPub*/
+INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,idUniversidad)
+VALUES ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '45129685', 'Licenciatura en Matemáticas', 'EDoctor','Universidad de Michigan')
+
+/* Caso a ser rechazado por no ingresar nombre unico*/
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*                           Tabla LUGARES                                  */
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/* Datos OK */
+INSERT INTO Lugares
+VALUES(1, 'Teatro Solis', 4, 2016, 11, 8, null, 'http://www.teatrosolis.org.uy', 'Udelar', 'Revistas')
+
+INSERT INTO Lugares
+VALUES(2, 'LATU', 3, 2015, 11, 9, 13, 'www.latu.org.uy', 'ORT', 'Congresos')
+
+INSERT INTO Lugares
+VALUES(3, 'Radisson Victoria Plaza Hotel', 4, 2015, 5, 20, null, 'https://www.radissonblu.com', 'UM', 'Libros')
+
+INSERT INTO Lugares
+VALUES(4, 'Holiday Inn', 2, 2017, 2, 10, 16, 'https://www.ihg.com', 'UCUDAL', 'Congresos')
+
+INSERT INTO Lugares
+VALUES(5, 'Hotel Dazzler', 1, 2014, 8, 8, null, 'https://www.dazzlerhoteles.com', 'UBA', 'Revistas')
+
+
+/*Datos a rechazar*/
+/* Caso a ser rechazado por idLugar duplicado */
+INSERT INTO Lugares
+VALUES(1, 'Hotel Guadalajara', 4, 2017, 11, 8, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por nombre = null */
+INSERT INTO Lugares (idLugar, nombre, nivelLugar, año, mes, diaIni, diaFin, link, universidad, tipoLugar)
+VALUES(6, null, 4, 2017, 11, 8, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por nivel > 4 */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Guadalajara', 8, 2017, 11, 8, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por año > año actual */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Guadalajara', 4, 2300, 11, 8, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por mes > 12 */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Guadalajara', 4, 2015, 98, 8, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por mes < 1 */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Guadalajara', 4, 2015, 0, 8, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por dia > 31 */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Guadalajara', 4, 2015, 11, 50, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por tipoLugar no entre los permtidos */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Guadalajara', 4, 2015, 11, 20, null, '', 'Udelar', 'Verduleria')
+
+/* Caso a ser rechazado por nombre repetido */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Dazzler', 4, 2015, 11, 20, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por universidad = null */
+INSERT INTO Lugares (idLugar, nombre, nivelLugar, año, mes, diaIni, diaFin, link, universidad, tipoLugar)
+VALUES(6, 'Hotel Guadalajara', 4, 2016, 11, 8, null, '', null, 'Revistas')
