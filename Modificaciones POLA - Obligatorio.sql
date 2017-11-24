@@ -82,6 +82,7 @@ go
 
 ALTER TABLE Universidad
   ALTER COLUMN nombre VARCHAR(100) NOT NULL;
+go
 
 ALTER TABLE Universidad
  add Constraint pk_nombre Primary key(nombre)
@@ -97,8 +98,10 @@ DROP COLUMN idInvestigador
 ALTER TABLE Investigador
 ADD idInvestigador INT NOT NULL IDENTITY(1,1)
 
+
 ALTER TABLE Investigador
 ADD idUniversidad VARCHAR(100) NOT NULL
+go
 
 ALTER TABLE Investigador
 ADD CONSTRAINT Investigador_PK PRIMARY KEY (idInvestigador)
@@ -131,6 +134,7 @@ REFERENCES Lugares
 /* TAGS */
 ALTER TABLE Tags
 ALTER COLUMN idTag INT NOT NULL
+go
 
 ALTER TABLE Tags
 ADD CONSTRAINT Tags_PK PRIMARY KEY (idTag)
@@ -146,6 +150,7 @@ ALTER COLUMN idTag INT NOT NULL
 
 ALTER TABLE TTAGS 
 ALTER COLUMN idTrab INT NOT NULL;
+go
 
 ALTER TABLE TTags
 ADD CONSTRAINT TTags_PK PRIMARY KEY (idTrab, idTag)
@@ -163,6 +168,7 @@ REFERENCES Tags
 /* TAUTORES */
 ALTER TABLE TAutores
 ALTER COLUMN idTrab INT NOT NULL
+go
 
 ALTER TABLE TAutores
 ADD CONSTRAINT TAutores_PK PRIMARY KEY (idTrab, idInvestigador)
@@ -180,6 +186,7 @@ REFERENCES Trabajo
 /* REFERENCIAS */
 ALTER TABLE Referencias
 ALTER COLUMN idTrab INT NOT NULL
+go
 
 ALTER TABLE Referencias
 ADD CONSTRAINT Referencias_PK PRIMARY KEY (idTrab, idTrabReferenciado)
