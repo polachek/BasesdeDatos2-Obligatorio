@@ -1,9 +1,26 @@
+###################################################################################
+-----------------------------------------------------------------------------------
+MEJORAS AL MODELO
+-----------------------------------------------------------------------------------
+###################################################################################
+Se debería agregar columnas: AnioFin y MesFin en la tabla LUGARES.
+Fundamento: en el modelo actual solamente se pueden representar CONGRESOS que tienen
+fecha final dentro de un mismo mes y año del Fecha Inicio. 
+
+
+###################################################################################
+-----------------------------------------------------------------------------------
+DISPARADORES PARA RESTRICCIONES DEL MODELO
+-----------------------------------------------------------------------------------
+###################################################################################
+
+INVESTIGADOR
+Trigger no actualizar datos de Universidad
 
 TRABAJO
 Controlar que Tipo de trabajo = IdTrabajo
 Crear Secuencial
-INVESTIGADOR
-Trigger no actualizar datos de Universidad
+
 
 TAGS
 Trigger para controlar secuenciador impar
@@ -15,3 +32,5 @@ Trigger para controlar que un trabajo no se referencie a si mismo
 LUGARES
 Trigger para controlar que si es un CONGRESOS => la FechaFin no puede ser nulo
 Controlar que año/mes/dia no sean posteriores al año/mes/dìa de la fecha actual
+
+
