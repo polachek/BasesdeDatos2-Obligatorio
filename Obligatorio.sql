@@ -124,6 +124,7 @@ ADD UNIQUE (Mail)
 
 ALTER TABLE Investigador
 ALTER COLUMN cantTrabPub INT NOT NULL
+go
 
 /*-------------------------------------------------------------------------*/
 /*Disparador para controlar que un INVESTIGADOR no cambie de UNIVERSIDAD */
@@ -133,20 +134,26 @@ ON Investigador
 INSTEAD OF UPDATE
 AS
 BEGIN
-	IF(EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted))
-		BEGIN
-			IF(EXISTS
-				(
-					SELECT * 
-					FROM Investigador x, inserted i
-					WHERE x.idInvestigador = i.idUniversidad
-					AND x.idUniversidad <> i.idUniversidad
-				)
-			)
-				BEGIN
-					PRINT 'No se admiten cambios de UNIVERSIDAD para un INVESTIGADOR.' 
-				END		
-		END
+
+	IF(EXISTS
+		(
+			SELECT * 
+			FROM Investigador x, inserted i
+			WHERE x.idInvestigador = i.idInvestigador
+			AND x.idUniversidad <> i.idUniversidad
+		)
+	)
+	BEGIN
+		PRINT 'No se admiten cambios de UNIVERSIDAD para un INVESTIGADOR.' 
+	END		
+	ELSE
+	BEGIN
+		UPDATE Investigador
+		SET nombre = i.nombre, mail = i.mail, telefono = i.telefono, carrera = i.carrera, nivelInvestig = i.nivelInvestig,cantTrabPub = i.cantTrabPub,idUniversidad = i.idUniversidad
+		FROM inserted i, Investigador inv
+		where i.idInvestigador = inv.idInvestigador
+	END
+
 END
 GO
 
@@ -174,6 +181,7 @@ ADD CONSTRAINT Trabajo_PK PRIMARY KEY (idTrab)
 ALTER TABLE Trabajo
 ADD CONSTRAINT Trabajo_FK FOREIGN KEY (lugarPublic)
 REFERENCES Lugares
+go
 
 /*-------------------------------------------------------------------------*/
 /*Disparador para generar ID Trabajo */
@@ -213,7 +221,7 @@ ALTER TABLE Tags
 ADD CONSTRAINT Tags_PK PRIMARY KEY (idTag)
 
 /* Disparador para generar secuenciador autonumérico impar en tabla TAGS*/
-
+/*
 CREATE TRIGGER IdTag_TAGS
 ON Tags
 INSTEAD OF INSERT
@@ -241,7 +249,7 @@ BEGIN
 	END
 	ELSE
 END
-GO
+GO*/
 /*-------------------------------------------------------------------------*/
 
 /* TTAGS */
@@ -294,13 +302,13 @@ REFERENCES Trabajo
 ALTER TABLE Referencias
 ADD CONSTRAINT Referencias_FK_TrabRef FOREIGN KEY (idTrabReferenciado)
 REFERENCES Trabajo
-
+go
 /*-------------------------------------------------------------------------*/
 /* Disparador para que un trabajo no se referencia a sí mismo en la tabla referencias.*/
 
 CREATE TRIGGER EvitarReferenciaCircular_REFERENCIAS
 ON Referencias
-INSTEAD OF INSERT
+INSTEAD OF INSERT, UPDATE
 AS
 BEGIN
 	DECLARE @trabajo VARCHAR(10)
@@ -309,19 +317,35 @@ BEGIN
 	SELECT @referencia = idTrabReferenciado FROM inserted	
 
 	IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted))
-	BEGIN
+	 BEGIN
 		IF(@trabajo <> @referencia)
 		BEGIN
-			INSERT Trabajo
+			INSERT Referencias
 			VALUES (@trabajo, @referencia)
 		END
 		ELSE
 		BEGIN
 			PRINT 'Un trabajo no puede referenciarse a sí mismo.'
 		END
-	END
+	 END
+	ELSE
+	 BEGIN
+		IF(@trabajo <> @referencia)
+		 BEGIN
+			UPDATE Referencias
+			SET idTrabReferenciado = @referencia
+			FROM inserted
+			WHERE Referencias.idTrab = @trabajo
+		 END
+		ELSE
+		 BEGIN
+			PRINT 'Un trabajo no puede referenciarse a sí mismo.'
+		 END
+	 END
 END
 GO
+
+select * from Referencias
 
 /*-------------------------------------------------------------------------*/
 
@@ -366,7 +390,7 @@ GO
 /*-------------------------------------------------------------------------*/
 /* Disparador para controlar que diaFin no sea nulo cuando tipolugar tiene 
 valor 'Congresos' en tabla LUGARES*/
-
+/*
 CREATE TRIGGER EvitarDiaFinNulo_LUGARES
 ON Lugares
 INSTEAD OF INSERT
@@ -407,7 +431,7 @@ BEGIN
 		END
 	END
 END
-
+*/
 
 
 /*########################################################################*/
@@ -556,7 +580,7 @@ VALUES(6, 'Hotel Dazzler', 4, 2015, 11, 20, null, '', 'Udelar', 'Revistas')
 /* Caso a ser rechazado por universidad = null */
 INSERT INTO Lugares (idLugar, nombre, nivelLugar, año, mes, diaIni, diaFin, link, universidad, tipoLugar)
 VALUES(6, 'Hotel Guadalajara', 4, 2016, 11, 8, null, '', null, 'Revistas')
-GO
+
 
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -594,7 +618,6 @@ VALUES ('Linda Cibils', 'lcibils@investigadores.com.uy', '48579568', 'Licenciatu
 INSERT INTO Investigador (nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
 VALUES ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '45129685', 'Licenciatura en Matemáticas', 'EDoctor', 5,'Universidad Federal de Alagoas')
 
-
 /*Datos a rechazar*/
 /* Caso a ser rechazado por ingresar idInvestigador */
 INSERT INTO Investigador (idInvestigador,nombre, mail, telefono, carrera, nivelInvestig,cantTrabPub,idUniversidad)
@@ -623,36 +646,35 @@ VALUES ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '98765432', 'Dco
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TRABAJO                               */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-Select * from trabajo
-
 
 /* Datos OK */
 INSERT INTO Trabajo
-VALUES('Investigacion GARZA CUCA', 'La garza cuca o también denominada garza mora (Ardea cocoi) es un ave nativa del Centro y Sudamérica, se estudia su ambiente y entorno', 'articulo', '2016-04-03', 'https://www.infoanimales.com/informacion-sobre-la-garza-cuca',1)
+VALUES('Investigacion GARZA CUCA', 'La garza cuca o también denominada garza mora (Ardea cocoi) es un ave nativa del Centro y Sudamérica, se estudia su ambiente y entorno', 'articulo', '2016-04-03', 'https://www.infoanimales.com/informacion-sobre-la-garza-cuca',1, 'id')
 
 INSERT INTO Trabajo
-VALUES('Venado de campo', 'Investigacion sobre el venado de campo, uno de los integrantes más característicos de la fauna uruguaya', 'capitulo', '2017-02-01', 'http://blogs.ceibal.edu.uy/formacion/colecciones-de-recursos/venado-de-campo/',2)
+VALUES('Venado de campo', 'Investigacion sobre el venado de campo, uno de los integrantes más característicos de la fauna uruguaya', 'capitulo', '2017-02-01', 'http://blogs.ceibal.edu.uy/formacion/colecciones-de-recursos/venado-de-campo/',2, 'id')
 
 INSERT INTO Trabajo
-VALUES('Investigacion sobre el Agua', 'El agua es un bien y un recurso cada vez mas escaso, que debe ser valorado, protegido y recuperado', 'poster', '2017-05-17', 'https://es.slideshare.net/sssanchezayelen/investigacin-sobre-el-agua',3)
+VALUES('Investigacion sobre el Agua', 'El agua es un bien y un recurso cada vez mas escaso, que debe ser valorado, protegido y recuperado', 'poster', '2017-05-17', 'https://es.slideshare.net/sssanchezayelen/investigacin-sobre-el-agua',3, 'id')
 
 INSERT INTO Trabajo
-VALUES('Investigacion sobre las drogas', 'La drogadicción es una enfermedad que consiste en la dependencia de sustancias que afectan el sistema nervioso central y las funciones cerebrales', 'articulo', '2017-05-17', 'https://www.monografias.com/docs/Investigacion-sobre-las-drogas-FKJQBHKYMZ',4)
+VALUES('Investigacion sobre las drogas', 'La drogadicción es una enfermedad que consiste en la dependencia de sustancias que afectan el sistema nervioso central y las funciones cerebrales', 'articulo', '2017-05-17', 'https://www.monografias.com/docs/Investigacion-sobre-las-drogas-FKJQBHKYMZ',4, 'id')
 
 INSERT INTO Trabajo
-VALUES('Investigacion sobre medio ambiente ', 'El análisis de lo ambiental desde la perspectiva de lo social', 'Otro', '2017-08-20', 'http://cis.ufro.cl/index.php?option=com_content&view=article&id=45&Itemid=34',5)
+VALUES('Investigacion sobre medio ambiente ', 'El análisis de lo ambiental desde la perspectiva de lo social', 'Otro', '2017-08-20', 'http://cis.ufro.cl/index.php?option=com_content&view=article&id=45&Itemid=34',5, 'id')
 
 INSERT INTO Trabajo
-VALUES('Investigacion sobre Cultura maya ', 'La civilización maya es sin duda la más fascinante de las antiguas culturas americanas', 'Otro', '2017-04-28', 'https://www.biografiasyvidas.com/historia/cultura_maya.htm',5)
+VALUES('Investigacion sobre Cultura maya ', 'La civilización maya es sin duda la más fascinante de las antiguas culturas americanas', 'Otro', '2017-04-28', 'https://www.biografiasyvidas.com/historia/cultura_maya.htm',5, 'id')
 
 /*Datos a rechazar*/
 /* Caso a ser rechazado por Descripcion > 200 Caracteres */
+/*
 INSERT INTO Trabajo
 VALUES('Investigacion de como hacer las cosas mal', 'Nor hence hoped her after other known defer his. For county now sister engage had season better had waited. Occasional mrs interested far expression acceptance. Day either mrs talent pulled men rather 201', 'articulo', '2016-04-03', null,1,'P3')
-
+*/
 /* Caso a ser rechazado por tipoTrab no permitido */
 INSERT INTO Trabajo
-VALUES('Investigacion sobre el mal hacer', 'Investigacion sobre cuando las cosas se macen hal', 'propaganda', '2016-04-03', 'https://www.google.com.uy',1,'P4')
+VALUES('Investigacion sobre el mal hacer', 'Investigacion sobre cuando las cosas se macen hal', 'resumen', '2016-04-03', 'https://www.google.com.uy',1,'P4')
 
 /* Caso a ser rechazado por Lugar = null */
 INSERT INTO Trabajo
@@ -831,10 +853,10 @@ VALUES('A1',7,'editor')
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /* Datos OK */
 INSERT INTO Referencias
-VALUES('P2','O1')
+VALUES('A0','C0')
 
 INSERT INTO Referencias
-VALUES('P1','A1')
+VALUES('P0','O0')
 
 /*Datos a rechazar*/
 /* Caso a ser rechazado por: idTrab = null */
@@ -862,7 +884,7 @@ VALUES('O2','O2')
 
 /* 4a - Crear una función que dada una universidad devuelva el último trabajo 
 publicado por esta. Si hay más de uno devolver uno cualquiera.*/
-CREATE FUNCTION fn_UltimoTrabajoPorUniv
+/*CREATE FUNCTION fn_UltimoTrabajoPorUniv
 (
 	@unaUniversidad VARCHAR(100)
 )
@@ -886,7 +908,7 @@ BEGIN
 RETURN @ultTrabajo
 END
 GO
-
+*/
 /* 4b - Crear una función almacenada que reciba como parámetro un trabajo 
 y devuelva la cantidad de referencias externas que tiene.*/
 /*
