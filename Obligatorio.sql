@@ -212,6 +212,36 @@ go
 ALTER TABLE Tags
 ADD CONSTRAINT Tags_PK PRIMARY KEY (idTag)
 
+/* Disparador para generar secuenciador autonumérico impar en tabla TAGS*/
+
+CREATE TRIGGER IdTag_TAGS
+ON Tags
+INSTEAD OF INSERT
+AS
+BEGIN
+	DECLARE @contador INT,
+			@maximo INT	
+	IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted))
+	BEGIN		
+		SELECT @maximo = MAX(idtag) FROM inserted
+		IF((@maximo >= 2 AND @maximo%2 = 1) OR @maximo = 1)
+		BEGIN
+			SET @maximo = @maximo + 2
+			INSERT Tags
+			SELECT idtag = @maximo, palabra = inserted.palabra
+			FROM inserted
+		END
+		ELSE IF((@maximo >= 2 AND @maximo%2 = 0) OR @maximo = 0)
+		BEGIN
+			SET @maximo = @maximo + 1
+			INSERT Tags
+			SELECT idtag = @maximo, palabra = inserted.palabra
+			FROM inserted
+		END 
+	END
+	ELSE
+END
+GO
 /*-------------------------------------------------------------------------*/
 
 /* TTAGS */
@@ -266,6 +296,34 @@ ADD CONSTRAINT Referencias_FK_TrabRef FOREIGN KEY (idTrabReferenciado)
 REFERENCES Trabajo
 
 /*-------------------------------------------------------------------------*/
+/* Disparador para que un trabajo no se referencia a sí mismo en la tabla referencias.*/
+
+CREATE TRIGGER EvitarReferenciaCircular_REFERENCIAS
+ON Referencias
+INSTEAD OF INSERT
+AS
+BEGIN
+	DECLARE @trabajo VARCHAR(10)
+	DECLARE @referencia VARCHAR(10)		
+	SELECT @trabajo = idTrab FROM inserted
+	SELECT @referencia = idTrabReferenciado FROM inserted	
+
+	IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted))
+	BEGIN
+		IF(@trabajo <> @referencia)
+		BEGIN
+			INSERT Trabajo
+			VALUES (@trabajo, @referencia)
+		END
+		ELSE
+		BEGIN
+			PRINT 'Un trabajo no puede referenciarse a sí mismo.'
+		END
+	END
+END
+GO
+
+/*-------------------------------------------------------------------------*/
 
 /* LUGARES */
 ALTER TABLE Lugares
@@ -304,6 +362,51 @@ ALTER TABLE Lugares
 ADD CONSTRAINT año_check CHECK (año BETWEEN 1900 and YEAR( GETDATE()));
 GO
 
+
+/*-------------------------------------------------------------------------*/
+/* Disparador para controlar que diaFin no sea nulo cuando tipolugar tiene 
+valor 'Congresos' en tabla LUGARES*/
+
+CREATE TRIGGER EvitarDiaFinNulo_LUGARES
+ON Lugares
+INSTEAD OF INSERT
+AS
+BEGIN
+	DECLARE @anio VARCHAR (4),
+			@mes VARCHAR (2),
+			@diaIni VARCHAR (2),
+			@diaFin VARCHAR (10),
+			@fechaInicio DATE,
+			@fechaFin DATE,
+			@fechaActual DATE
+	IF(EXISTS (SELECT * FROM inserted) )
+	BEGIN
+		SELECT @anio = CAST(año AS VARCHAR(4)) FROM inserted
+		SELECT @mes = CAST(mes AS VARCHAR(2)) FROM inserted
+		SELECT @diaIni = CAST(diaIni AS varchar(2)) FROM inserted		
+		SET @fechaInicio = CONVERT(date, @anio+@mes+@diaIni);
+		IF('Congresos' = (SELECT tipoLugar from inserted)  AND EXISTS (SELECT diaFin FROM inserted))
+		BEGIN
+			SELECT @diaFin = CAST(diaFin AS VARCHAR(2)) FROM inserted
+			SET @fechaFin = CONVERT(date, @anio+@mes+@diaFin)
+			SET @fechaActual = GETDATE()
+			IF(@fechaInicio < @fechaFin AND @fechaFin < @fechaActual)
+			BEGIN
+				INSERT Lugares
+				SELECT idLugar = inserted.idLugar, nombre = inserted.nombre, nivelLugar = inserted.nivelLugar, año = inserted.año, mes = inserted.mes, diaIni = inserted.diaIni, diaFin = inserted.diaFin, link = inserted.link, universidad = inserted.universidad, tipoLugar = inserted.tipoLugar
+				FROM inserted
+			END
+			ELSE
+			BEGIN
+				PRINT 'La fecha de inicio debe ser anterior a la fecha fin y ambas deben ser anteriores a la fecha actual.'
+			END				
+		END
+		ELSE IF ('Congresos' = (SELECT tipoLugar from inserted)  AND NOT EXISTS (SELECT diaFin FROM inserted))
+		BEGIN
+			PRINT 'Debe ingresar una fecha para el fin del congreso.'				
+		END
+	END
+END
 
 
 
@@ -777,6 +880,8 @@ BEGIN
 		WHERE Universidad = @unaUniversidad
 		AND
 	)
+
+	SELECT 
 
 RETURN @ultTrabajo
 END
