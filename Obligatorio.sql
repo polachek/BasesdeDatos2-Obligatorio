@@ -219,37 +219,54 @@ go
 
 ALTER TABLE Tags
 ADD CONSTRAINT Tags_PK PRIMARY KEY (idTag)
-
+go
 /* Disparador para generar secuenciador autonumérico impar en tabla TAGS*/
-/*
+
 CREATE TRIGGER IdTag_TAGS
 ON Tags
-INSTEAD OF INSERT
+INSTEAD OF INSERT, UPDATE
 AS
 BEGIN
 	DECLARE @contador INT,
 			@maximo INT	
 	IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted))
-	BEGIN		
-		SELECT @maximo = MAX(idtag) FROM inserted
-		IF((@maximo >= 2 AND @maximo%2 = 1) OR @maximo = 1)
-		BEGIN
-			SET @maximo = @maximo + 2
+	BEGIN	
+	    IF (NOT EXISTS( select * FROM Tags))
+		 BEGIN
+		    SET @maximo = 1
 			INSERT Tags
 			SELECT idtag = @maximo, palabra = inserted.palabra
 			FROM inserted
-		END
-		ELSE IF((@maximo >= 2 AND @maximo%2 = 0) OR @maximo = 0)
-		BEGIN
-			SET @maximo = @maximo + 1
-			INSERT Tags
-			SELECT idtag = @maximo, palabra = inserted.palabra
-			FROM inserted
-		END 
+		 END
+		ELSE
+		 BEGIN
+		  SELECT @maximo = MAX(idtag) FROM Tags
+			IF((@maximo >= 2 AND @maximo%2 = 1) OR @maximo = 1)
+			BEGIN
+				SET @maximo = @maximo + 2
+				INSERT Tags
+				SELECT idtag = @maximo, palabra = inserted.palabra
+				FROM inserted
+			END
+			ELSE IF((@maximo >= 2 AND @maximo%2 = 0))
+			BEGIN
+				SET @maximo = @maximo + 1
+				INSERT Tags
+				SELECT idtag = @maximo, palabra = inserted.palabra
+				FROM inserted
+			END 
+	     END
 	END
-	ELSE
+	ELSE IF(EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted))
+	 BEGIN
+		UPDATE Tags
+		set palabra = inserted.palabra
+		from inserted
+		where Tags.idtag = inserted.idtag
+	 END
+	 
 END
-GO*/
+GO
 /*-------------------------------------------------------------------------*/
 
 /* TTAGS */
@@ -390,7 +407,7 @@ GO
 /*-------------------------------------------------------------------------*/
 /* Disparador para controlar que diaFin no sea nulo cuando tipolugar tiene 
 valor 'Congresos' en tabla LUGARES*/
-/*
+
 CREATE TRIGGER EvitarDiaFinNulo_LUGARES
 ON Lugares
 INSTEAD OF INSERT
@@ -431,7 +448,7 @@ BEGIN
 		END
 	END
 END
-*/
+
 
 
 /*########################################################################*/
@@ -683,49 +700,51 @@ VALUES('Investigacion sobre el lugar nulo', 'Investigacion sobre la nulinidad de
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TAGS                                  */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+delete from tags
 
+select * from tags
 /*Datos OK*/
-INSERT INTO Tags(palabra)
-VALUES ('garza')
+INSERT INTO Tags
+VALUES (1, 'garza')
 
-INSERT INTO Tags(palabra)
-VALUES ('cuca')
+INSERT INTO Tags
+VALUES (1, 'cuca')
 
-INSERT INTO Tags(palabra)
-VALUES ('venado')
+INSERT INTO Tags
+VALUES (1, 'venado')
 
-INSERT INTO Tags(palabra)
-VALUES ('campo')
+INSERT INTO Tags
+VALUES (1, 'campo')
 
-INSERT INTO Tags(palabra)
-VALUES ('fauna')
+INSERT INTO Tags
+VALUES (1, 'fauna')
 
-INSERT INTO Tags(palabra)
-VALUES ('animales')
+INSERT INTO Tags
+VALUES (1, 'animales')
 
-INSERT INTO Tags(palabra)
-VALUES ('silvestre')
+INSERT INTO Tags
+VALUES (1, 'silvestre')
 
-INSERT INTO Tags(palabra)
-VALUES ('agua')
+INSERT INTO Tags
+VALUES (1, 'agua')
 
-INSERT INTO Tags(palabra)
-VALUES ('ambiente')
+INSERT INTO Tags
+VALUES (1, 'ambiente')
 
-INSERT INTO Tags(palabra)
-VALUES ('ecología')
+INSERT INTO Tags
+VALUES (1, 'ecología')
 
-INSERT INTO Tags(palabra)
-VALUES ('drogas')
+INSERT INTO Tags
+VALUES (1, 'drogas')
 
-INSERT INTO Tags(palabra)
-VALUES ('adicciones')
+INSERT INTO Tags
+VALUES (1, 'adicciones')
 
-INSERT INTO Tags(palabra)
-VALUES ('cultura')
+INSERT INTO Tags
+VALUES (1, 'cultura')
 
-INSERT INTO Tags(palabra)
-VALUES ('mayas')
+INSERT INTO Tags
+VALUES (1, 'mayas')
 
 /*Datos a rechazar*/
 /* Caso a ser rechazado por identificador par */
