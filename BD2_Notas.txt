@@ -36,22 +36,22 @@ DISPARADORES PARA RESTRICCIONES DEL MODELO
 ###################################################################################
 
 INVESTIGADOR
-Trigger no actualizar datos de Universidad
+Trigger no actualizar datos de Universidad    ---- LISTO
 
 TRABAJO
-Controlar que Tipo de trabajo = IdTrabajo
+Controlar que Tipo de trabajo = IdTrabajo    ---- LISTO
 Crear Secuencial
 
 
 TAGS
-Trigger para controlar secuenciador impar
+Trigger para controlar secuenciador impar    ---- LISTO
 Si id es 0 => suma 1, sino suma 2
 
 REFERENCIAS
-Trigger para controlar que un trabajo no se referencie a si mismo
+Trigger para controlar que un trabajo no se referencie a si mismo    ---- LISTO
 
 LUGARES
-Trigger para controlar que si es un CONGRESOS => la FechaFin no puede ser nulo
+Trigger para controlar que si es un CONGRESOS => la FechaFin no puede ser nulo     ---- CONSULTAR PROFE LETRA
 Controlar que año/mes/dia no sean posteriores al año/mes/dìa de la fecha actual
 
 

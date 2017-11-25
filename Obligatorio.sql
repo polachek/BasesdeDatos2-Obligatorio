@@ -407,7 +407,7 @@ GO
 /*-------------------------------------------------------------------------*/
 /* Disparador para controlar que diaFin no sea nulo cuando tipolugar tiene 
 valor 'Congresos' en tabla LUGARES*/
-
+/*
 CREATE TRIGGER EvitarDiaFinNulo_LUGARES
 ON Lugares
 INSTEAD OF INSERT
@@ -420,18 +420,16 @@ BEGIN
 			@fechaInicio DATE,
 			@fechaFin DATE,
 			@fechaActual DATE
-	IF(EXISTS (SELECT * FROM inserted) )
-	BEGIN
 		SELECT @anio = CAST(año AS VARCHAR(4)) FROM inserted
 		SELECT @mes = CAST(mes AS VARCHAR(2)) FROM inserted
 		SELECT @diaIni = CAST(diaIni AS varchar(2)) FROM inserted		
-		SET @fechaInicio = CONVERT(date, @anio+@mes+@diaIni);
-		IF('Congresos' = (SELECT tipoLugar from inserted)  AND EXISTS (SELECT diaFin FROM inserted))
+		SET @fechaInicio = CONVERT(date, @anio+@mes+@diaIni)
+		IF('Congresos' in (SELECT tipoLugar from inserted)  AND EXISTS (SELECT diaFin FROM inserted))
 		BEGIN
 			SELECT @diaFin = CAST(diaFin AS VARCHAR(2)) FROM inserted
 			SET @fechaFin = CONVERT(date, @anio+@mes+@diaFin)
 			SET @fechaActual = GETDATE()
-			IF(@fechaInicio < @fechaFin AND @fechaFin < @fechaActual)
+			IF(@fechaInicio < @fechaFin AND @fechaInicio < @fechaActual)
 			BEGIN
 				INSERT Lugares
 				SELECT idLugar = inserted.idLugar, nombre = inserted.nombre, nivelLugar = inserted.nivelLugar, año = inserted.año, mes = inserted.mes, diaIni = inserted.diaIni, diaFin = inserted.diaFin, link = inserted.link, universidad = inserted.universidad, tipoLugar = inserted.tipoLugar
@@ -442,13 +440,13 @@ BEGIN
 				PRINT 'La fecha de inicio debe ser anterior a la fecha fin y ambas deben ser anteriores a la fecha actual.'
 			END				
 		END
-		ELSE IF ('Congresos' = (SELECT tipoLugar from inserted)  AND NOT EXISTS (SELECT diaFin FROM inserted))
+		ELSE IF ('Congresos' in (SELECT tipoLugar from inserted)  AND NOT EXISTS (SELECT diaFin FROM inserted))
 		BEGIN
 			PRINT 'Debe ingresar una fecha para el fin del congreso.'				
 		END
-	END
-END
 
+END
+*/
 
 
 /*########################################################################*/
