@@ -126,6 +126,31 @@ ALTER TABLE Investigador
 ALTER COLUMN cantTrabPub INT NOT NULL
 
 /*-------------------------------------------------------------------------*/
+/*Disparador para controlar que un INVESTIGADOR no cambie de UNIVERSIDAD */
+
+CREATE TRIGGER INVESTIGADOR_UNIVERSIDAD
+ON Investigador
+INSTEAD OF UPDATE
+AS
+BEGIN
+	IF(EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted))
+		BEGIN
+			IF(EXISTS
+				(
+					SELECT * 
+					FROM Investigador x, inserted i
+					WHERE x.idInvestigador = i.idUniversidad
+					AND x.idUniversidad <> i.idUniversidad
+				)
+			)
+				BEGIN
+					PRINT 'No se admiten cambios de UNIVERSIDAD para un INVESTIGADOR.' 
+				END		
+		END
+END
+GO
+
+/*-------------------------------------------------------------------------*/
 
 /* TRABAJO */
 ALTER TABLE Trabajo
@@ -143,19 +168,38 @@ go
 ALTER TABLE Trabajo
 ADD CONSTRAINT tipoTrab_check CHECK (tipoTrab IN ('poster', 'articulo', 'capitulo', 'otro'))
 
-/*
-
-=> IMPLEMENTAR TRIGGER
-
-ALTER TABLE Trabajo
-ADD CONSTRAINT idTrab_check CHECK (idTrab like '[PACO][1-9]+')
-*/
 ALTER TABLE Trabajo
 ADD CONSTRAINT Trabajo_PK PRIMARY KEY (idTrab)
 
 ALTER TABLE Trabajo
 ADD CONSTRAINT Trabajo_FK FOREIGN KEY (lugarPublic)
 REFERENCES Lugares
+
+/*-------------------------------------------------------------------------*/
+/*Disparador para generar ID Trabajo */
+
+create trigger trig_idTrab
+on Trabajo
+instead of insert
+as
+begin
+
+  declare @ultINS int;
+  set @ultINS = (select COUNT(*) from Trabajo where tipoTrab in (select tipoTrab from inserted));
+
+  declare @alphaNumID varchar(10);
+  select @alphaNumID = UPPER(SUBSTRING(tipoTrab, 1, 1)) from inserted;
+
+  set @alphaNumID = @alphaNumID + CONVERT(varchar(10), @ultINS);
+
+  insert into Trabajo
+  select nomTrab, descripTrab, tipoTrab, fechaInicio, linkTrab, lugarPublic, @alphaNumID
+  from inserted
+end
+go
+
+
+
 
 /*-------------------------------------------------------------------------*/
 
@@ -261,27 +305,6 @@ ADD CONSTRAINT año_check CHECK (año BETWEEN 1900 and YEAR( GETDATE()));
 GO
 
 
-/*select * from trabajo*/
-
-create trigger trig_idTrab
-on Trabajo
-instead of insert
-as
-begin
-
-  declare @ultINS int;
-  set @ultINS = (select COUNT(*) from Trabajo where tipoTrab in (select tipoTrab from inserted));
-
-  declare @alphaNumID varchar(10);
-  select @alphaNumID = UPPER(SUBSTRING(tipoTrab, 1, 1)) from inserted;
-
-  set @alphaNumID = @alphaNumID + CONVERT(varchar(10), @ultINS);
-
-  insert into Trabajo
-  select nomTrab, descripTrab, tipoTrab, fechaInicio, linkTrab, lugarPublic, @alphaNumID
-  from inserted
-end
-go
 
 
 /*########################################################################*/
@@ -718,7 +741,7 @@ VALUES(null,'A1')
 /* Caso a ser rechazado por: idTrabReferenciado = null */
 INSERT INTO Referencias
 VALUES('O2',null)
-
+GO
 /* Caso a ser rechazado por: se referencia asimismo  */
 /* REGULAR CON TRIGGER
 INSERT INTO Referencias
@@ -733,6 +756,31 @@ VALUES('O2','O2')
 /*########################################################################*/
 /*########################################################################*/
 /*########################################################################*/
+
+/* 4a - Crear una función que dada una universidad devuelva el último trabajo 
+publicado por esta. Si hay más de uno devolver uno cualquiera.*/
+CREATE FUNCTION fn_UltimoTrabajoPorUniv
+(
+	@unaUniversidad VARCHAR(100)
+)
+RETURNS VARCHAR(10)
+AS
+BEGIN
+	DECLARE @ultTrabajo VARCHAR(10)
+
+	SELECT @ultTrabajo = idTrab 
+	FROM Trabajo 
+	WHERE lugarPublic IN 
+	(
+		SELECT lugarPublic
+		FROM Trabajo
+		WHERE Universidad = @unaUniversidad
+		AND
+	)
+
+RETURN @ultTrabajo
+END
+GO
 
 /* 4b - Crear una función almacenada que reciba como parámetro un trabajo 
 y devuelva la cantidad de referencias externas que tiene.*/
