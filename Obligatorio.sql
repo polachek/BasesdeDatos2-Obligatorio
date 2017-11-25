@@ -154,10 +154,6 @@ ALTER TABLE Trabajo
 ADD CONSTRAINT Trabajo_PK PRIMARY KEY (idTrab)
 
 ALTER TABLE Trabajo
-ALTER COLUMN lugarPublic int not null
-go
-
-ALTER TABLE Trabajo
 ADD CONSTRAINT Trabajo_FK FOREIGN KEY (lugarPublic)
 REFERENCES Lugares
 
@@ -263,206 +259,30 @@ ADD CONSTRAINT diaF_check CHECK (diaFin BETWEEN 1 and 31)
 ALTER TABLE Lugares
 ADD CONSTRAINT año_check CHECK (año BETWEEN 1900 and YEAR( GETDATE()));
 GO
-/*-------------------------------------------------------------------------*/
-/*Disparador para controlar que un INVESTIGADOR no cambie de UNIVERSIDAD */
-
-CREATE TRIGGER INVESTIGADOR_UNIVERSIDAD
-ON Investigador
-INSTEAD OF UPDATE
-AS
-BEGIN
-	IF(EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted))
-		BEGIN
-			IF(EXISTS
-				(
-					SELECT * 
-					FROM Investigador x, inserted i
-					WHERE x.idInvestigador = i.idUniversidad
-					AND x.idUniversidad <> i.idUniversidad
-				)
-			)
-				BEGIN
-					PRINT 'No se admiten cambios de UNIVERSIDAD para un INVESTIGADOR.' 
-				END		
-		END
-END
-GO
 
 
-/*-------------------------------------------------------------------------*/
 
 
-/* Funciones y disparador para generar IdTrab alfanumérico con número secuencial */
-CREATE FUNCTION fn_GeneraId
-(
-	@TipoTrabajo VARCHAR(20),
-	@ultIdTrabaja VARCHAR(10)
-)
-RETURNS VARCHAR(10)
-AS
-BEGIN
-	DECLARE @TipoTrabajoChar CHAR(1),
-			@ultIdTrabajaInt INT,					 
-			@IdTrabInt INT,
-			@IdTrabIntActualizado INT,
-			@IdTrabNuevo VARCHAR(10)		
-	SET	@TipoTrabajoChar = SUBSTRING(@TipoTrabajo,1,1)
-	SET @IdTrabInt = SUBSTRING(@ultIdTrabaja,2,LEN(@ultIdTrabaja))
-	SET @IdTrabIntActualizado = @IdTrabInt + 1;
-	SET @IdTrabNuevo = @TipoTrabajoChar + CAST(@IdTrabIntActualizado AS varchar(1))
+create trigger trig_idTrab
+on Trabajo
+instead of insert
+as
+begin
 
-RETURN @IdTrabNuevo
-END
-GO
+  declare @ultINS int;
+  set @ultINS = (select COUNT(*) from Trabajo where tipoTrab in (select tipoTrab from inserted));
 
-CREATE FUNCTION fn_ExisteId
-(
-	@TipoTrabajo VARCHAR(20)
-)
-RETURNS VARCHAR(10)
-AS
-BEGIN
-	DECLARE @idMaximo VARCHAR(10)
-	SELECT @idMaximo = MAX(idTrab) FROM Trabajo WHERE tipoTrab LIKE @TipoTrabajo
-RETURN @idMaximo
-END
-GO
+  declare @alphaNumID varchar(10);
+  select @alphaNumID = UPPER(SUBSTRING(tipoTrab, 1, 1)) from inserted;
 
-CREATE TRIGGER IdTrabajo_TRABAJO
-ON Trabajo
-INSTEAD OF INSERT
-AS
-BEGIN
-	DECLARE @TipoTrabajo VARCHAR(20),					
-			@ultIdTrabaja VARCHAR(10),
-			@nuevoIdTrabaja VARCHAR(10)		
-	IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS(SELECT * FROM deleted))
-	BEGIN	
-		SELECT @TipoTrabajo = tipoTrab FROM inserted
-		IF(EXISTS(SELECT * FROM Trabajo WHERE tipoTrab LIKE @TipoTrabajo))
-		BEGIN
-			IF(dbo.fn_ExisteId(@TipoTrabajo) <> NULL)
-				BEGIN
-					SELECT @ultIdTrabaja = MAX(idTrab) FROM Trabajo WHERE tipoTrab LIKE @TipoTrabajo
-					SET @nuevoIdTrabaja = dbo.fn_GeneraId(@TipoTrabajo, @ultIdTrabaja);
+  set @alphaNumID = @alphaNumID + CONVERT(varchar(10), @ultINS);
 
-					INSERT Trabajo
-					SELECT @nuevoIdTrabaja, nomTrab, descripTrab, tipoTrab, fechaInicio, linkTrab, lugarPublic
-					FROM inserted
-				END
-		END
-		ELSE
-		BEGIN
-			SET @nuevoIdTrabaja = SUBSTRING(@TipoTrabajo,1,1)+'0';
-		END 
-	END
-END
-GO
+  insert into Trabajo
+  select nomTrab, descripTrab, tipoTrab, fechaInicio, linkTrab, lugarPublic, @alphaNumID
+  from inserted
+end
+go
 
-
-/*-------------------------------------------------------------------------*/
-/* Disparador para generar secuenciador autonumérico impar en tabla TAGS*/
-
-CREATE TRIGGER IdTag_TAGS
-ON Tags
-INSTEAD OF INSERT
-AS
-BEGIN
-	DECLARE @contador INT,
-			@maximo INT	
-	IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted))
-	BEGIN		
-		SELECT @maximo = MAX(idtag) FROM inserted
-		IF((@maximo >= 2 AND @maximo%2 = 1) OR @maximo = 1)
-		BEGIN
-			SET @maximo = @maximo + 2
-			INSERT Tags
-			SELECT idtag = @maximo, palabra = inserted.palabra
-			FROM inserted
-		END
-		ELSE IF((@maximo >= 2 AND @maximo%2 = 0) OR @maximo = 0)
-		BEGIN
-			SET @maximo = @maximo + 1
-			INSERT Tags
-			SELECT idtag = @maximo, palabra = inserted.palabra
-			FROM inserted
-		END 
-	END
-	ELSE
-END
-GO
-
-/*-------------------------------------------------------------------------*/
-/* Disparador para que un trabajo no se referencia a sí mismo en la tabla referencias.*/
-
-CREATE TRIGGER EvitarReferenciaCircular_REFERENCIAS
-ON Referencias
-INSTEAD OF INSERT
-AS
-BEGIN
-	DECLARE @trabajo VARCHAR(10)
-	DECLARE @referencia VARCHAR(10)		
-	SELECT @trabajo = idTrab FROM inserted
-	SELECT @referencia = idTrabReferenciado FROM inserted	
-
-	IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted))
-	BEGIN
-		IF(@trabajo <> @referencia)
-		BEGIN
-			INSERT Trabajo
-			VALUES (@trabajo, @referencia)
-		END
-		ELSE
-		BEGIN
-			PRINT 'Un trabajo no puede referenciarse a sí mismo.'
-		END
-	END
-END
-GO
-/*-------------------------------------------------------------------------*/
-/* Disparador para controlar que diaFin no sea nulo cuando tipolugar tiene 
-valor 'Congresos' en tabla LUGARES*/
-
-CREATE TRIGGER EvitarDiaFinNulo_LUGARES
-ON Lugares
-INSTEAD OF INSERT
-AS
-BEGIN
-	DECLARE @anio VARCHAR (4),
-			@mes VARCHAR (2),
-			@diaIni VARCHAR (2),
-			@diaFin VARCHAR (10),
-			@fechaInicio DATE,
-			@fechaFin DATE,
-			@fechaActual DATE
-	IF(EXISTS (SELECT * FROM inserted) )
-	BEGIN
-		SELECT @anio = CAST(año AS VARCHAR(4)) FROM inserted
-		SELECT @mes = CAST(mes AS VARCHAR(2)) FROM inserted
-		SELECT @diaIni = CAST(diaIni AS varchar(2)) FROM inserted		
-		SET @fechaInicio = CONVERT(date, @anio+@mes+@diaIni);
-		IF('Congresos' = (SELECT tipoLugar from inserted)  AND EXISTS (SELECT diaFin FROM inserted))
-		BEGIN
-			SELECT @diaFin = CAST(diaFin AS VARCHAR(2)) FROM inserted
-			SET @fechaFin = CONVERT(date, @anio+@mes+@diaFin)
-			SET @fechaActual = GETDATE()
-			IF(@fechaInicio < @fechaFin AND @fechaFin < @fechaActual)
-			BEGIN
-				INSERT Lugares
-				SELECT idLugar = inserted.idLugar, nombre = inserted.nombre, nivelLugar = inserted.nivelLugar, año = inserted.año, mes = inserted.mes, diaIni = inserted.diaIni, diaFin = inserted.diaFin, link = inserted.link, universidad = inserted.universidad, tipoLugar = inserted.tipoLugar
-				FROM inserted
-			END
-			ELSE
-			BEGIN
-				PRINT 'La fecha de inicio debe ser anterior a la fecha fin y ambas deben ser anteriores a la fecha actual.'
-			END				
-		END
-		ELSE IF ('Congresos' = (SELECT tipoLugar from inserted)  AND NOT EXISTS (SELECT diaFin FROM inserted))
-		BEGIN
-			PRINT 'Debe ingresar una fecha para el fin del congreso.'				
-		END
-	END
-END
 
 /*########################################################################*/
 /*########################################################################*/
@@ -549,6 +369,69 @@ VALUES ('Universidad del Nuevo Mundo', 'Uruguay', NULL, '55445544')
 INSERT INTO Universidad (nombre, pais, ciudad)
 VALUES ('Universidad Cornell', 'Uruguay', 'Montevideo')
 
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*                           Tabla LUGARES                                  */
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/* Datos OK */
+INSERT INTO Lugares
+VALUES(1, 'Teatro Solis', 4, 2016, 11, 8, null, 'http://www.teatrosolis.org.uy', 'Udelar', 'Revistas')
+
+INSERT INTO Lugares
+VALUES(2, 'LATU', 3, 2015, 11, 9, 13, 'www.latu.org.uy', 'ORT', 'Congresos')
+
+INSERT INTO Lugares
+VALUES(3, 'Radisson Victoria Plaza Hotel', 4, 2015, 5, 20, null, 'https://www.radissonblu.com', 'UM', 'Libros')
+
+INSERT INTO Lugares
+VALUES(4, 'Holiday Inn', 2, 2017, 2, 10, 16, 'https://www.ihg.com', 'UCUDAL', 'Congresos')
+
+INSERT INTO Lugares
+VALUES(5, 'Hotel Dazzler', 1, 2014, 8, 8, null, 'https://www.dazzlerhoteles.com', 'UBA', 'Revistas')
+
+
+/*Datos a rechazar*/
+/* Caso a ser rechazado por idLugar duplicado */
+INSERT INTO Lugares
+VALUES(1, 'Hotel Guadalajara', 4, 2017, 11, 8, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por nombre = null */
+INSERT INTO Lugares (idLugar, nombre, nivelLugar, año, mes, diaIni, diaFin, link, universidad, tipoLugar)
+VALUES(6, null, 4, 2017, 11, 8, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por nivel > 4 */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Guadalajara', 8, 2017, 11, 8, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por año > año actual */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Guadalajara', 4, 2300, 11, 8, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por mes > 12 */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Guadalajara', 4, 2015, 98, 8, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por mes < 1 */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Guadalajara', 4, 2015, 0, 8, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por dia > 31 */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Guadalajara', 4, 2015, 11, 50, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por tipoLugar no entre los permtidos */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Guadalajara', 4, 2015, 11, 20, null, '', 'Udelar', 'Verduleria')
+
+/* Caso a ser rechazado por nombre repetido */
+INSERT INTO Lugares
+VALUES(6, 'Hotel Dazzler', 4, 2015, 11, 20, null, '', 'Udelar', 'Revistas')
+
+/* Caso a ser rechazado por universidad = null */
+INSERT INTO Lugares (idLugar, nombre, nivelLugar, año, mes, diaIni, diaFin, link, universidad, tipoLugar)
+VALUES(6, 'Hotel Guadalajara', 4, 2016, 11, 8, null, '', null, 'Revistas')
+GO
+
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                           Tabla INVESTIGADOR                             */
@@ -614,6 +497,8 @@ VALUES ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '98765432', 'Dco
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TRABAJO                               */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+Select * from trabajo
+
 
 /* Datos OK */
 INSERT INTO Trabajo
@@ -623,16 +508,16 @@ INSERT INTO Trabajo
 VALUES('Venado de campo', 'Investigacion sobre el venado de campo, uno de los integrantes más característicos de la fauna uruguaya', 'capitulo', '2017-02-01', 'http://blogs.ceibal.edu.uy/formacion/colecciones-de-recursos/venado-de-campo/',2,'A1')
 
 INSERT INTO Trabajo
-VALUES('Investigacion sobre el Agua', 'El agua es un bien y un recurso cada vez mas escaso, que debe ser valorado, protegido y recuperado', 'poster,', '2017-05-17', 'https://es.slideshare.net/sssanchezayelen/investigacin-sobre-el-agua',3,'P2')
+VALUES('Investigacion sobre el Agua', 'El agua es un bien y un recurso cada vez mas escaso, que debe ser valorado, protegido y recuperado', 'poster', '2017-05-17', 'https://es.slideshare.net/sssanchezayelen/investigacin-sobre-el-agua',3,'P2')
 
 INSERT INTO Trabajo
-VALUES('Investigacion sobre las drogas', 'La drogadicción es una enfermedad que consiste en la dependencia de sustancias que afectan el sistema nervioso central y las funciones cerebrales', 'articulo,', '2017-05-17', 'https://www.monografias.com/docs/Investigacion-sobre-las-drogas-FKJQBHKYMZ',4,'A2')
+VALUES('Investigacion sobre las drogas', 'La drogadicción es una enfermedad que consiste en la dependencia de sustancias que afectan el sistema nervioso central y las funciones cerebrales', 'articulo', '2017-05-17', 'https://www.monografias.com/docs/Investigacion-sobre-las-drogas-FKJQBHKYMZ',4,'A2')
 
 INSERT INTO Trabajo
-VALUES('Investigacion sobre medio ambiente ', 'El análisis de lo ambiental desde la perspectiva de lo social', 'Otro,', '2017-08-20', 'http://cis.ufro.cl/index.php?option=com_content&view=article&id=45&Itemid=34',5,'O1')
+VALUES('Investigacion sobre medio ambiente ', 'El análisis de lo ambiental desde la perspectiva de lo social', 'Otro', '2017-08-20', 'http://cis.ufro.cl/index.php?option=com_content&view=article&id=45&Itemid=34',5,'O1')
 
 INSERT INTO Trabajo
-VALUES('Investigacion sobre Cultura maya ', 'La civilización maya es sin duda la más fascinante de las antiguas culturas americanas. Ciertamente, en ninguna de ellas se halla un esplendor artístico e intelectual parangonable al alcanzado por la cultura maya', 'Otro,', '2017-04-28', 'https://www.biografiasyvidas.com/historia/cultura_maya.htm',6,'O2')
+VALUES('Investigacion sobre Cultura maya ', 'La civilización maya es sin duda la más fascinante de las antiguas culturas americanas', 'Otro,', '2017-04-28', 'https://www.biografiasyvidas.com/historia/cultura_maya.htm',6,'O2')
 
 /*Datos a rechazar*/
 /* Caso a ser rechazado por Descripcion > 200 Caracteres */
@@ -840,68 +725,7 @@ INSERT INTO Referencias
 VALUES('O2','O2')
 */
 
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-/*                           Tabla LUGARES                                  */
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-/* Datos OK */
-INSERT INTO Lugares
-VALUES(1, 'Teatro Solis', 4, 2016, 11, 8, null, 'http://www.teatrosolis.org.uy', 'Udelar', 'Revistas')
-
-INSERT INTO Lugares
-VALUES(2, 'LATU', 3, 2015, 11, 9, 13, 'www.latu.org.uy', 'ORT', 'Congresos')
-
-INSERT INTO Lugares
-VALUES(3, 'Radisson Victoria Plaza Hotel', 4, 2015, 5, 20, null, 'https://www.radissonblu.com', 'UM', 'Libros')
-
-INSERT INTO Lugares
-VALUES(4, 'Holiday Inn', 2, 2017, 2, 10, 16, 'https://www.ihg.com', 'UCUDAL', 'Congresos')
-
-INSERT INTO Lugares
-VALUES(5, 'Hotel Dazzler', 1, 2014, 8, 8, null, 'https://www.dazzlerhoteles.com', 'UBA', 'Revistas')
-
-
-/*Datos a rechazar*/
-/* Caso a ser rechazado por idLugar duplicado */
-INSERT INTO Lugares
-VALUES(1, 'Hotel Guadalajara', 4, 2017, 11, 8, null, '', 'Udelar', 'Revistas')
-
-/* Caso a ser rechazado por nombre = null */
-INSERT INTO Lugares (idLugar, nombre, nivelLugar, año, mes, diaIni, diaFin, link, universidad, tipoLugar)
-VALUES(6, null, 4, 2017, 11, 8, null, '', 'Udelar', 'Revistas')
-
-/* Caso a ser rechazado por nivel > 4 */
-INSERT INTO Lugares
-VALUES(6, 'Hotel Guadalajara', 8, 2017, 11, 8, null, '', 'Udelar', 'Revistas')
-
-/* Caso a ser rechazado por año > año actual */
-INSERT INTO Lugares
-VALUES(6, 'Hotel Guadalajara', 4, 2300, 11, 8, null, '', 'Udelar', 'Revistas')
-
-/* Caso a ser rechazado por mes > 12 */
-INSERT INTO Lugares
-VALUES(6, 'Hotel Guadalajara', 4, 2015, 98, 8, null, '', 'Udelar', 'Revistas')
-
-/* Caso a ser rechazado por mes < 1 */
-INSERT INTO Lugares
-VALUES(6, 'Hotel Guadalajara', 4, 2015, 0, 8, null, '', 'Udelar', 'Revistas')
-
-/* Caso a ser rechazado por dia > 31 */
-INSERT INTO Lugares
-VALUES(6, 'Hotel Guadalajara', 4, 2015, 11, 50, null, '', 'Udelar', 'Revistas')
-
-/* Caso a ser rechazado por tipoLugar no entre los permtidos */
-INSERT INTO Lugares
-VALUES(6, 'Hotel Guadalajara', 4, 2015, 11, 20, null, '', 'Udelar', 'Verduleria')
-
-/* Caso a ser rechazado por nombre repetido */
-INSERT INTO Lugares
-VALUES(6, 'Hotel Dazzler', 4, 2015, 11, 20, null, '', 'Udelar', 'Revistas')
-
-/* Caso a ser rechazado por universidad = null */
-INSERT INTO Lugares (idLugar, nombre, nivelLugar, año, mes, diaIni, diaFin, link, universidad, tipoLugar)
-VALUES(6, 'Hotel Guadalajara', 4, 2016, 11, 8, null, '', null, 'Revistas')
-GO
 /*########################################################################*/
 /*########################################################################*/
 /*########################################################################*/
@@ -912,6 +736,7 @@ GO
 
 /* 4b - Crear una función almacenada que reciba como parámetro un trabajo 
 y devuelva la cantidad de referencias externas que tiene.*/
+/*
 CREATE FUNCTION fn_CantReferenciasExt
 (
 	@unTrabajo VARCHAR(100)
@@ -938,13 +763,13 @@ BEGIN
 RETURN @cantReferencias
 END
 GO
-
+*/
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 /* 4c - Crear una función que reciba dos investigadores y devuelva 
 la cantidad de trabajos publicados en los cuales ambos investigadores fueron autores 
 y alguno de los dos o los dos fueron autores principales.*/
-
+/*
 CREATE FUNCTION fn_CantTrabPublicados
 (
 	@investigadorA INT,
@@ -992,14 +817,14 @@ BEGIN
 RETURN @cantTrabajos
 END
 GO
-
+*/
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 /* 4d - Crear una función o procedimiento, según considere/corresponda, 
 que dado un investigador actualice el campo cantidad de trabajos publicados 
 registrados de la tabla Investigador, y devuelva una indicación de si la cantidad 
 que estaba registrada (antes de la actualización) era correcta o no.*/
-
+/*
 CREATE PROCEDURE spu_UpdateCantTrab
 @unInvestigador INT,
 @mensaje VARCHAR(50) output
@@ -1029,5 +854,5 @@ BEGIN
 	END
 END
 
-
+*/
 
