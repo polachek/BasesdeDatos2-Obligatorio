@@ -6,6 +6,7 @@
 /*########################################################################*/
 /*########################################################################*/
 
+
 /* Creacion de la BD */
 CREATE DATABASE BD_INVESTIGACIONES
 go
@@ -74,7 +75,6 @@ create Table Lugares (
 	link varchar(200), 
 	universidad varchar(50) )
 go
-	
 
 
 
@@ -901,10 +901,133 @@ VALUES(6, 'Hotel Dazzler', 4, 2015, 11, 20, null, '', 'Udelar', 'Revistas')
 /* Caso a ser rechazado por universidad = null */
 INSERT INTO Lugares (idLugar, nombre, nivelLugar, año, mes, diaIni, diaFin, link, universidad, tipoLugar)
 VALUES(6, 'Hotel Guadalajara', 4, 2016, 11, 8, null, '', null, 'Revistas')
+GO
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+/*                              SE PIDE #4                      		  */
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
 
+/* 4b - Crear una función almacenada que reciba como parámetro un trabajo 
+y devuelva la cantidad de referencias externas que tiene.*/
+CREATE FUNCTION fn_CantReferenciasExt
+(
+	@unTrabajo VARCHAR(100)
+)
+RETURNS INT
+AS
+BEGIN
+	DECLARE @cantReferencias INT
+	IF(EXISTS (	SELECT * FROM Referencias r WHERE r.idTrab = @unTrabajo))
+	BEGIN
+		SELECT @cantReferencias = COUNT(*)
+		FROM Referencias r, TAutores a
+		WHERE r.idTrab = @unTrabajo 
+		AND r.idTrab = a.idTrab
+		AND r.idTrabReferenciado = a.idTrab
+		AND a.idInvestigador NOT IN 
+		(
+			SELECT idInvestigador
+			FROM TAutores
+			WHERE a.idTrab = r.idTrab
+		)
+		 
+	END
+RETURN @cantReferencias
+END
+GO
 
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
+/* 4c - Crear una función que reciba dos investigadores y devuelva 
+la cantidad de trabajos publicados en los cuales ambos investigadores fueron autores 
+y alguno de los dos o los dos fueron autores principales.*/
 
+CREATE FUNCTION fn_CantTrabPublicados
+(
+	@investigadorA INT,
+	@investigadorB INT
+)
+RETURNS INT
+AS
+BEGIN
+	DECLARE @cantTrabajos INT
+
+	SELECT @cantTrabajos = COUNT (DISTINCT x.idTrab)
+	FROM TAutores x, TAutores y
+	WHERE x.idTrab IN 
+	(
+		SELECT idTrab
+		FROM TAutores
+		WHERE idInvestigador = @investigadorA
+	) 
+	AND x.idTrab IN
+	(
+		SELECT idTrab
+		FROM TAutores
+		WHERE idInvestigador = @investigadorB	
+	)
+	AND 
+	(
+		EXISTS
+		(
+			SELECT *
+			FROM TAutores
+			WHERE idInvestigador = @investigadorA
+			AND x.idTrab = y.idTrab
+			AND y.rolinvestig LIKE 'autor-ppal' 
+		)
+		OR EXISTS
+		(
+			SELECT *
+			FROM TAutores
+			WHERE idInvestigador = @investigadorB
+			AND x.idTrab = y.idTrab
+			AND y.rolinvestig LIKE 'autor-ppal'
+		)
+	)
+
+RETURN @cantTrabajos
+END
+GO
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
+/* 4d - Crear una función o procedimiento, según considere/corresponda, 
+que dado un investigador actualice el campo cantidad de trabajos publicados 
+registrados de la tabla Investigador, y devuelva una indicación de si la cantidad 
+que estaba registrada (antes de la actualización) era correcta o no.*/
+
+CREATE PROCEDURE spu_UpdateCantTrab
+@unInvestigador INT,
+@mensaje VARCHAR(50) output
+AS
+BEGIN
+	DECLARE @cantTrabajosEfectivos INT,
+			@cantTrabajosContados INT
+	
+	SELECT @cantTrabajosEfectivos = COUNT(*)
+	FROM TAutores
+	WHERE idInvestigador = @unInvestigador
+
+	SELECT @cantTrabajosContados = cantTrabPub
+	FROM Investigador
+	WHERE idInvestigador = @unInvestigador
+
+	IF(@cantTrabajosContados = @cantTrabajosEfectivos)
+	BEGIN
+		SET @mensaje = 'La cantidad de trabajos era correcta, no fue necesario actualizar la tabla.'		
+	END
+	ELSE
+	BEGIN
+		UPDATE Investigador
+		SET cantTrabPub = @cantTrabajosEfectivos
+		WHERE idInvestigador = @unInvestigador
+		SET @mensaje = 'La cantidad de trabajos no era correcta, la tabla se actualizó con el valor correcto.'		
+	END
+END
 
 
 

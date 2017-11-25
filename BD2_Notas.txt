@@ -6,6 +6,27 @@ MEJORAS AL MODELO
 Se debería agregar columnas: AnioFin y MesFin en la tabla LUGARES.
 Fundamento: en el modelo actual solamente se pueden representar CONGRESOS que tienen
 fecha final dentro de un mismo mes y año del Fecha Inicio. 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
+
+
+###################################################################################
+-----------------------------------------------------------------------------------
+RESTRICCIONES DEL MODELO
+-----------------------------------------------------------------------------------
+###################################################################################
+
+Para analizar:
+En TRABAJO, el campo LUGAR puede aceptar nulos porque ese lugar sólo se ingresa si el trabajo
+fue publicado.
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+
 
 
 ###################################################################################
