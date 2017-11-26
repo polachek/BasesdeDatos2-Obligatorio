@@ -756,46 +756,31 @@ VALUES (NULL)
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TTAGS                                  */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+Select * from Trabajo
+Select * from tags
+
 
 /*Datos OK*/
 INSERT INTO TTags
-VALUES ('P1',1)
+VALUES ('A0',1)
 
 INSERT INTO TTags
-VALUES ('P1',3)
+VALUES ('A0',3)
 
 INSERT INTO TTags
-VALUES ('A1',5)
+VALUES ('C0',5)
 
 INSERT INTO TTags
-VALUES ('A1',7)
+VALUES ('O0',7)
 
 INSERT INTO TTags
-VALUES ('A1',9)
+VALUES ('O1',9)
 
 INSERT INTO TTags
-VALUES ('P2',15)
-
-INSERT INTO TTags
-VALUES ('P2',17)
-
-INSERT INTO TTags
-VALUES ('P2',19)
-
-INSERT INTO TTags
-VALUES ('A2',21)
-
-INSERT INTO TTags
-VALUES ('A2',23)
+VALUES ('P0',15)
 
 INSERT INTO TTags
 VALUES ('O1',17)
-
-INSERT INTO TTags
-VALUES ('O2',25)
-
-INSERT INTO TTags
-VALUES ('O2',27)
 
 /*Datos a rechazar*/
 /*Caso a ser rechazado por PK duplicado*/
@@ -819,34 +804,34 @@ VALUES (27)
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 INSERT INTO TAutores
-VALUES('P1',1,'autor-ppal')
+VALUES('A0',1,'autor-ppal')
 
 INSERT INTO TAutores
-VALUES('P1',5,'autor-sec')
+VALUES('A0',5,'autor-sec')
 
 INSERT INTO TAutores
-VALUES('P2',2,'autor-director')
+VALUES('C0',2,'autor-director')
 
 INSERT INTO TAutores
-VALUES('01',2,'autor-ppal')
+VALUES('O1',2,'autor-ppal')
 
 INSERT INTO TAutores
-VALUES('02',3,'autor-director')
+VALUES('P0',3,'autor-director')
 
 INSERT INTO TAutores
 VALUES('A1',4,'autor-ppal')
 
 INSERT INTO TAutores
-VALUES('A2',6,'autor-ppal')
+VALUES('A1',6,'autor-ppal')
 
 INSERT INTO TAutores
-VALUES('A2',9,'autor-sec')
+VALUES('A1',9,'autor-sec')
 
 INSERT INTO TAutores
-VALUES('A2',9,'autor-sec')
+VALUES('A0',9,'autor-sec')
 
 INSERT INTO TAutores
-VALUES('A2',8,'autor-director')
+VALUES('A1',8,'autor-director')
 
 /*Datos a rechazar*/
 /*Caso a ser rechazado por PK duplicada*/
@@ -875,6 +860,9 @@ VALUES('A0','C0')
 INSERT INTO Referencias
 VALUES('P0','O0')
 
+INSERT INTO Referencias
+VALUES('A0','A1')
+
 /*Datos a rechazar*/
 /* Caso a ser rechazado por: idTrab = null */
 INSERT INTO Referencias
@@ -901,10 +889,8 @@ VALUES('O2','O2')
 
 /* 4a - Crear una función que dada una universidad devuelva el último trabajo 
 publicado por esta. Si hay más de uno devolver uno cualquiera.*/
-/*CREATE FUNCTION fn_UltimoTrabajoPorUniv
-(
-	@unaUniversidad VARCHAR(100)
-)
+/*
+CREATE FUNCTION fn_UltimoTrabajoPorUniv (@unaUniversidad VARCHAR(100))
 RETURNS VARCHAR(10)
 AS
 BEGIN
@@ -914,13 +900,11 @@ BEGIN
 	FROM Trabajo 
 	WHERE lugarPublic IN 
 	(
-		SELECT lugarPublic
-		FROM Trabajo
-		WHERE Universidad = @unaUniversidad
-		AND
+		SELECT idLugar
+		FROM Lugares
+		WHERE universidad = @unaUniversidad
 	)
 
-	SELECT 
 
 RETURN @ultTrabajo
 END
@@ -928,11 +912,8 @@ GO
 */
 /* 4b - Crear una función almacenada que reciba como parámetro un trabajo 
 y devuelva la cantidad de referencias externas que tiene.*/
-/*
-CREATE FUNCTION fn_CantReferenciasExt
-(
-	@unTrabajo VARCHAR(100)
-)
+
+ALTER FUNCTION fn_CantReferenciasExt ( @unTrabajo VARCHAR(100))
 RETURNS INT
 AS
 BEGIN
@@ -940,28 +921,41 @@ BEGIN
 	IF(EXISTS (	SELECT * FROM Referencias r WHERE r.idTrab = @unTrabajo))
 	BEGIN
 		SELECT @cantReferencias = COUNT(*)
-		FROM Referencias r, TAutores a
-		WHERE r.idTrab = @unTrabajo 
-		AND r.idTrab = a.idTrab
-		AND r.idTrabReferenciado = a.idTrab
-		AND a.idInvestigador NOT IN 
-		(
-			SELECT idInvestigador
-			FROM TAutores
-			WHERE a.idTrab = r.idTrab
+		FROM Referencias r
+		WHERE r.idTrab = @unTrabajo 		
+		AND  r.idTrabReferenciado NOT IN(
+			SELECT idTrab
+			from TAutores a
+			where idInvestigador in (
+			 select idInvestigador
+			 from TAutores b
+			 where r.idTrab = b.idTrab
+			)
 		)
-		 
 	END
+	ELSE
+	 BEGIN
+	  SET @cantReferencias = 0
+	 END
+
 RETURN @cantReferencias
 END
 GO
-*/
+
+declare @cantRef int;
+set @cantRef = dbo.fn_CantReferenciasExt('P0')
+PRINT @cantRef
+
+declare @cantRef int;
+set @cantRef = dbo.fn_CantReferenciasExt('A0')
+PRINT @cantRef
+go
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 /* 4c - Crear una función que reciba dos investigadores y devuelva 
 la cantidad de trabajos publicados en los cuales ambos investigadores fueron autores 
 y alguno de los dos o los dos fueron autores principales.*/
-/*
+
 CREATE FUNCTION fn_CantTrabPublicados
 (
 	@investigadorA INT,
@@ -973,53 +967,31 @@ BEGIN
 	DECLARE @cantTrabajos INT
 
 	SELECT @cantTrabajos = COUNT (DISTINCT x.idTrab)
-	FROM TAutores x, TAutores y
-	WHERE x.idTrab IN 
-	(
-		SELECT idTrab
-		FROM TAutores
-		WHERE idInvestigador = @investigadorA
-	) 
-	AND x.idTrab IN
-	(
-		SELECT idTrab
-		FROM TAutores
-		WHERE idInvestigador = @investigadorB	
-	)
-	AND 
-	(
-		EXISTS
-		(
-			SELECT *
-			FROM TAutores
-			WHERE idInvestigador = @investigadorA
-			AND x.idTrab = y.idTrab
-			AND y.rolinvestig LIKE 'autor-ppal' 
-		)
-		OR EXISTS
-		(
-			SELECT *
-			FROM TAutores
-			WHERE idInvestigador = @investigadorB
-			AND x.idTrab = y.idTrab
-			AND y.rolinvestig LIKE 'autor-ppal'
-		)
-	)
+	from TAutores x, TAutores y
+	where x.idInvestigador = @investigadorA
+	and y.idInvestigador = @investigadorB
+	and x.idTrab = y.idTrab
+	and (x.rolinvestig = 'autor-ppal' or y.rolinvestig= 'autor-ppal') 
 
 RETURN @cantTrabajos
 END
 GO
-*/
+
+declare @cantTrabInvs int;
+set @cantTrabInvs = dbo.fn_CantTrabPublicados(1,9)
+PRINT @cantTrabInvs
+
+GO
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 /* 4d - Crear una función o procedimiento, según considere/corresponda, 
 que dado un investigador actualice el campo cantidad de trabajos publicados 
 registrados de la tabla Investigador, y devuelva una indicación de si la cantidad 
 que estaba registrada (antes de la actualización) era correcta o no.*/
-/*
+
 CREATE PROCEDURE spu_UpdateCantTrab
 @unInvestigador INT,
-@mensaje VARCHAR(50) output
+@mensaje VARCHAR(200) output
 AS
 BEGIN
 	DECLARE @cantTrabajosEfectivos INT,
@@ -1045,6 +1017,149 @@ BEGIN
 		SET @mensaje = 'La cantidad de trabajos no era correcta, la tabla se actualizó con el valor correcto.'		
 	END
 END
+go
 
-*/
+declare @mensaje varchar(200)
+EXEC spu_UpdateCantTrab 7, @mensaje output
+print @mensaje
+
+go
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*
+4.e Crear una función que dado dos años (año1 y año2) y una palabra clave devuelva 
+la cantidad de trabajos publicados en libros o revistas en el rango de años 
+y que trata el tema indicado por la palabra clave.*/
+
+CREATE FUNCTION fn_CantTrbjAniosClave(
+@anio1 INT,
+@anio2 INT,
+@clave varchar(50)
+)
+RETURNS INT
+AS
+BEGIN
+ Declare @cantidad int;
+ select @cantidad = COUNT(*)
+FROM Trabajo
+WHERE idTrab in (
+	SELECT idTrab
+	From TTags 
+	where idTag in(
+		 Select idTag 
+		 from Tags
+		 where palabra = @clave
+    )
+) AND lugarPublic in (
+					SELECT idLugar
+					from Lugares
+					where (tipoLugar = 'Revistas' or tipoLugar = 'Libros')
+					AND año >= @anio1 AND año <= @anio2
+)
+RETURN @cantidad
+END
+
+declare @cantTrabInvs int;
+set @cantTrabInvs = dbo.fn_CantTrbjAniosClave(2015, 2016, 'Caca')
+PRINT @cantTrabInvs
+
+go
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*
+4.f Crear una función que reciba un tipo de trabajo y devuelva un nuevo identificador para dicho trabajo. */
+CREATE FUNCTION fn_NuevoIdentTipoTrabajo(
+@elTipoTrabajo varchar(50)
+)
+RETURNS VARCHAR(10)
+AS
+BEGIN
+	DECLARE @ret VARCHAR(10);
+	declare @alphaNumID varchar(10);
+	IF(@elTipoTrabajo LIKE 'poster' OR @elTipoTrabajo LIKE 'articulo' OR @elTipoTrabajo LIKE 'capitulo' OR @elTipoTrabajo LIKE 'OTRO')
+    BEGIN
+		select @alphaNumID = UPPER(SUBSTRING(@elTipoTrabajo, 1, 1));
+		declare @ultINS int;
+		set @ultINS = (select COUNT(*) from Trabajo where tipoTrab = @elTipoTrabajo);
+		set @ultINS = @ultINS +1;
+
+		set @ret = @alphaNumID + CONVERT(varchar(10), @ultINS);
+	END
+	/*ELSE
+	BEGIN
+		PRINT 'El parametro ingresado no corresponde a un tipo de trabajo valido.'
+	END*/
+RETURN @ret
+END
+GO
+
+declare @nueviTipo varchar(50);
+set @nueviTipo = dbo.fn_NuevoIdentTipoTrabajo('poster')
+PRINT @nueviTipo
+GO
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*
+4.g Crear un procedimiento que dado una universidad devuelva los datos del congreso 
+en el cual público su ultimo Articulo, y algún tipo de indicación de si existe o no 
+un artículo con esas condiciones. Suponemos que no hay congresos que traten 
+los mismos temas y que se solapen en el tiempo. */
+CREATE FUNCTION fn_CongresoDeUniArt(
+@laUniversidad varchar(100)
+)
+RETURNS VARCHAR(300)
+AS
+BEGIN
+	declare @nombre VARCHAR(250);
+	declare @nivelLugar int;
+	declare @diaIni int;
+	declare @mes int;
+	declare @anio int;
+	DECLARE @ret VARCHAR(300);
+
+	SELECT @nombre = l.nombre, @nivelLugar = l.nivelLugar, @diaIni = l.diaIni, @mes = l.mes, @anio = l.año
+	FROM Lugares l, Trabajo t
+	WHERE l.idLugar = t.lugarPublic
+	AND t.idTrab IN (
+		SELECT MAX(idTrab)
+		FROM Trabajo ta
+		WHERE ta.tipoTrab = 'Articulo'
+		AND lugarPublic IN(
+			SELECT idLugar
+			FROM Lugares lg
+			WHERE lg.tipoLugar = 'Congresos'
+			AND lg.universidad = @laUniversidad
+		)
+	)
+set @ret = @nombre+CONVERT(varchar(1), @nivelLugar)+CONVERT(varchar(2), @diaIni)+CONVERT(varchar(2), @mes)+CONVERT(varchar(4), @anio)
+RETURN @ret
+END
+
+declare @uni varchar(300);
+set @uni = dbo.fn_CongresoDeUniArt('UCUDAL')
+PRINT @uni
+
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+/*
+4.h Crear un procedimiento o función, según considere/corresponda, 
+que dado un tipo de trabajo (Articulo, Poster, etc.) 
+devuelva la cantidad de investigadores que tengan más de 5 trabajos del tipo indicado,
+ y que tengan la maxima cantidad de publicaciones.. */
+
+ SELECT COUNT(idInvestigador)
+ FROM TAutores ta
+ WHERE ta.idTrab in(
+	SELECT idTrab
+	FROM Trabajo tr
+	WHERE tr.tipoTrab = 'articulo'
+	)
+ AND ta.idInvestigador IN(
+	SELECT inv.idInvestigador
+	FROM Investigador inv
+	WHERE inv.cantTrabPub IN( 
+		SELECT MAX(cantTrabPub)
+		FROM Investigador
+		)
+	)
+GROUP BY idInvestigador 
+HAVING COUNT(idInvestigador)> 0
 
