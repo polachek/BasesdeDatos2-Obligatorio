@@ -1462,9 +1462,23 @@ el identificador del trabajo, nombre del mismo, la cantidad de autores que tiene
 y lugar donde se publico (id y nombre).
 */
 
-select t.idTrab as 'Identificador del trabajo', t.nomTrab as 'Nombre de Trabajo', Count(distinct ta.idInvestigador) as 'Cantidad de Autores', l.idLugar as 'Id Lugar', l.nombre as 'Nombe del Lugar'
-From Trabajo t, Lugares l, TAutores ta
-where t.lugarPublic = l.idLugar and t.idTrab = ta.idTrab
-group by t.idTrab,t.nomTrab, l.idLugar, l.nombre  having count(*) > 3
+SELECT t.idTrab as 'Identificador del trabajo', t.nomTrab as 'Nombre de Trabajo', Count(distinct ta.idInvestigador) as 'Cantidad de Autores', l.idLugar as 'Id Lugar', l.nombre as 'Nombe del Lugar'
+FROM Trabajo t, Lugares l, TAutores ta
+WHERE t.lugarPublic = l.idLugar and t.idTrab = ta.idTrab
+GROUP BY t.idTrab,t.nomTrab, l.idLugar, l.nombre  
+HAVING COUNT(*) > 3
 
+/*
+b. Obtener la lista de palabras claves que aparecen en trabajos sobre 'BASE DE DATOS'
+(palabra clave) publicados en revistas del año actual. La salida debe aparecer
+ordenado alfabéticamente, sin repetidos.
+*/
 
+SELECT DISTINCT t.palabra
+FROM TTags tt, Tags t, Trabajo w, Lugares l
+WHERE tt.idTag = t.idtag
+AND t.palabra LIKE 'BASE DE DATOS'
+AND w.lugarPublic = l.idLugar
+AND l.tipoLugar LIKE 'Revistas'
+AND l.año = YEAR(GETDATE())
+ORDER BY (t.palabra)
