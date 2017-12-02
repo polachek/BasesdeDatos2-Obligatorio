@@ -1153,7 +1153,7 @@ declare @uni varchar(300);
 set @uni = dbo.fn_CongresoDeUniArt('UCUDAL')
 PRINT @uni
 
-
+go
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*
 4.h Crear un procedimiento o función, según considere/corresponda, 
@@ -1161,14 +1161,16 @@ que dado un tipo de trabajo (Articulo, Poster, etc.)
 devuelva la cantidad de investigadores que tengan más de 5 trabajos del tipo indicado,
  y que tengan la maxima cantidad de publicaciones.. */
 
- SELECT COUNT(idInvestigador)
+CREATE FUNCTION fn_CantAutTipoTrab(
+@tipoTrabajo varchar(20)
+)
+RETURNS int
+AS
+BEGIN
+ declare @ret int;
+ SELECT @ret = COUNT(DISTINCT idInvestigador)
  FROM TAutores ta
- WHERE ta.idTrab in(
-	SELECT idTrab
-	FROM Trabajo tr
-	WHERE tr.tipoTrab = 'articulo'
-	)
- AND ta.idInvestigador IN(
+ WHERE ta.idInvestigador IN(
 	SELECT inv.idInvestigador
 	FROM Investigador inv
 	WHERE inv.cantTrabPub IN( 
@@ -1176,6 +1178,34 @@ devuelva la cantidad de investigadores que tengan más de 5 trabajos del tipo ind
 		FROM Investigador
 		)
 	)
-GROUP BY idInvestigador 
-HAVING COUNT(idInvestigador)> 0
+ AND ta.idInvestigador IN(
+	SELECT inv.idInvestigador
+	FROM Investigador inv, Trabajo t, TAutores ta
+	WHERE inv.idInvestigador = ta.idInvestigador
+	AND ta.idTrab = t.idTrab
+	AND t.tipoTrab LIKE @tipoTrabajo
+	GROUP BY inv.idInvestigador
+	HAVING COUNT(*)>5
+	)
+
+ RETURN @ret;
+END
+go
+
+declare @ret int;
+set @ret = dbo.fn_CantAutTipoTrab('articulo')
+PRINT @ret
+
+
+
+
+
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+/*                              SE PIDE #5                      		  */
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+
 
