@@ -1209,3 +1209,63 @@ PRINT @ret
 /*########################################################################*/
 
 
+/*
+5 - a. Crear un trigger que al insertar un trabajo asegure las restricciones identificadas, 
+y en caso de que no se asignó una fecha de inicio el trigger asigne el primero de enero del año actual 
+como fecha de inicio del trabajo.
+En el caso de considerarse insert de a un trabajo por vez, debe asegurarse de que la operación se haga 
+solo en ese caso.
+*/
+
+DROP TRIGGER trig_idTrab
+go
+
+alter TRIGGER tg_RestriccionesTrabajo
+ON Trabajo
+INSTEAD OF INSERT
+AS
+BEGIN
+	
+	IF( NOT EXISTS( Select COUNT(*) From inserted GROUP BY nomTrab having count(*) > 1))
+	 BEGIN
+		 DECLARE @nomTrab VARCHAR(100);
+		 DECLARE @descripTrab VARCHAR(100);
+		 DECLARE @tipoTrab VARCHAR(20);
+		 DECLARE @fecha date;
+
+		 /*Trigger Trabajo alphanumerico*/
+		 declare @ultINS int;
+		 set @ultINS = (select COUNT(*) from Trabajo where tipoTrab in (select tipoTrab from inserted));
+		 declare @alphaNumID varchar(10);
+		 select @alphaNumID = UPPER(SUBSTRING(tipoTrab, 1, 1)) from inserted;
+	     set @alphaNumID = @alphaNumID + CONVERT(varchar(10), @ultINS);
+		 
+
+		 /* Trigger 5a */
+		 select @nomTrab = nomTrab, @descripTrab = descripTrab, @tipoTrab = tipoTrab, @fecha = fechaInicio
+	     from inserted
+
+		 IF(@nomTrab is not null AND @tipoTrab is not null)
+		 BEGIN
+			IF(@tipoTrab like 'poster' OR @tipoTrab like 'articulo' OR @tipoTrab like 'capitulo' OR @tipoTrab like 'otro')
+			BEGIN
+				if(@fecha is null) Begin set @fecha = '01-01-'+CONVERT(varchar(4),YEAR(GETDATE())); End
+				insert into Trabajo
+				select nomTrab, descripTrab, tipoTrab, @fecha, linkTrab, lugarPublic, @alphaNumID
+				from inserted
+			END
+			ELSE
+			BEGIN
+			 PRINT 'Parametros no correctos'
+			END
+		 END
+
+	 END
+END
+
+
+/*
+5 - b Crear un trigger que controle que solo puedan eliminarse trabajos no publicados que iniciaron hace
+ más de 2 años. Eliminando todos los datos de la base de datos que considere necesarios asociados a dichos trabajos.
+Debe considerarse eliminaciones múltiples.
+*/
