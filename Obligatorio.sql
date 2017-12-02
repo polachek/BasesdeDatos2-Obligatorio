@@ -1477,8 +1477,27 @@ ordenado alfabéticamente, sin repetidos.
 SELECT DISTINCT t.palabra
 FROM TTags tt, Tags t, Trabajo w, Lugares l
 WHERE tt.idTag = t.idtag
-AND t.palabra LIKE 'BASE DE DATOS'
+AND tt.idTrab = w.idTrab
 AND w.lugarPublic = l.idLugar
 AND l.tipoLugar LIKE 'Revistas'
 AND l.año = YEAR(GETDATE())
+AND w.idTrab IN(
+	SELECT z.idTrab
+	FROM TTags z
+	WHERE z.idTag IN (
+		SELECT y.idtag
+		FROM Tags y
+		WHERE y.palabra = 'BASE DE DATOS'
+	)
+)
 ORDER BY (t.palabra)
+
+select * from  Tags
+insert into Tags values (4, 'BASE DE DATOS')
+select * from TTags
+select * from  Tags
+insert into TTags values ('A0',9)
+select * from Lugares
+select * from Trabajo
+
+update Lugares set año='2017' where idLugar=1
