@@ -1220,7 +1220,7 @@ solo en ese caso.
 DROP TRIGGER trig_idTrab
 go
 
-alter TRIGGER tg_RestriccionesTrabajo
+CREATE TRIGGER tg_RestriccionesTrabajo
 ON Trabajo
 INSTEAD OF INSERT
 AS
@@ -1262,10 +1262,94 @@ BEGIN
 
 	 END
 END
-
+GO
 
 /*
 5 - b Crear un trigger que controle que solo puedan eliminarse trabajos no publicados que iniciaron hace
  más de 2 años. Eliminando todos los datos de la base de datos que considere necesarios asociados a dichos trabajos.
 Debe considerarse eliminaciones múltiples.
 */
+
+CREATE TRIGGER tg_EliminarTrabajos
+ON Trabajo
+INSTEAD OF DELETE
+AS
+BEGIN	
+
+	DELETE FROM Referencias
+	WHERE idTrab IN	(
+		SELECT x.idTrab
+		FROM Trabajo x
+		WHERE YEAR(x.fechaInicio) < (YEAR(GETDATE()) - 2)
+	)
+	AND idTrab IN (
+		SELECT y.idTrab
+		FROM Trabajo y
+		WHERE y.lugarPublic IS NULL
+	)
+	AND idTrab IN(
+		SELECT idTrab
+		FROM deleted
+	)
+
+	DELETE FROM Referencias
+	WHERE idTrabReferenciado IN	(
+		SELECT x.idTrab
+		FROM Trabajo x
+		WHERE YEAR(x.fechaInicio) < (YEAR(GETDATE()) - 2)
+	)
+	AND idTrabReferenciado IN (
+		SELECT y.idTrab
+		FROM Trabajo y
+		WHERE y.lugarPublic IS NULL
+	)
+	AND idTrabReferenciado IN(
+		SELECT idTrab
+		FROM deleted
+	)
+
+	DELETE FROM TAutores
+	WHERE idTrab IN	(
+		SELECT x.idTrab
+		FROM Trabajo x
+		WHERE YEAR(x.fechaInicio) < (YEAR(GETDATE()) - 2)
+	)
+	AND idTrab IN (
+		SELECT y.idTrab
+		FROM Trabajo y
+		WHERE y.lugarPublic IS NULL
+	)
+	AND idTrab IN(
+		SELECT idTrab
+		FROM deleted
+	)
+
+	DELETE FROM TTags
+	WHERE idTrab IN	(
+		SELECT x.idTrab
+		FROM Trabajo x
+		WHERE YEAR(x.fechaInicio) < (YEAR(GETDATE()) - 2)
+	)
+	AND idTrab IN (
+		SELECT y.idTrab
+		FROM Trabajo y
+		WHERE y.lugarPublic IS NULL
+	)
+	AND idTrab IN(
+		SELECT idTrab
+		FROM deleted
+	)
+	
+	DELETE FROM Trabajo
+	WHERE YEAR(fechaInicio) < (YEAR(GETDATE()) - 2)
+	AND lugarPublic IS NULL	
+	AND idTrab IN(
+		SELECT idTrab
+		FROM deleted
+	)
+
+
+
+
+END
+
