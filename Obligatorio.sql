@@ -1349,6 +1349,7 @@ BEGIN
 	)
 END
 GO
+
 /*
 5c - Crear un trigger que solo permita insertar dos trabajos, uno como referencia del otro, 
 si tienen algún tema (palabras claves) en común. */
@@ -1387,10 +1388,57 @@ BEGIN
 	BEGIN
 		PRINT 'Los trabajos no tienen temas (palabras clave) en común.'
 	END	
-
-
-
 END
+GO
+
+/* 5d - Crear un trigger que audite las inserciones y las actualizaciones de los lugares que
+tienen algún trabajo publicado, registrando en alguna tabla auxiliar el lugar que se
+quiere actualizar/insertar, la operación (INS o UPD), el usuario y la fecha hora de la
+operación.*/
+
+CREATE TABLE LogInsertAndUpdate (
+	lugar INT,
+	operacion VARCHAR(3) CHECK (operacion IN ('INS', 'UPD')),
+	usuario VARCHAR,
+	fechaOperacion date
+)
+GO
+
+CREATE TRIGGER tg_AuditarInsOrUpd
+ON Lugares
+AFTER INSERT, UPDATE
+AS
+BEGIN
+	DECLARE @lugar INT
+
+	IF(EXISTS (
+		SELECT * 
+		FROM inserted 
+		WHERE idLugar IN 
+			(
+				SELECT lugarPublic
+				FROM Trabajo
+			)
+		)
+	)
+	BEGIN
+		SELECT @lugar = idLugar
+		FROM inserted
+		
+		IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted))
+		BEGIN
+			INSERT INTO LogInsertAndUpdate
+			VALUES (@lugar, 'INS', USER, GETDATE())
+		END
+		ELSE IF(EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted))
+		BEGIN
+			INSERT INTO LogInsertAndUpdate
+			VALUES (@lugar, 'INS', USER, GETDATE())
+		END
+	END
+END
+
+
 
 
 
