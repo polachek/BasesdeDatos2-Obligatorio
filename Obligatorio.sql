@@ -1265,7 +1265,7 @@ END
 GO
 
 /*
-5 - b Crear un trigger que controle que solo puedan eliminarse trabajos no publicados que iniciaron hace
+5b - Crear un trigger que controle que solo puedan eliminarse trabajos no publicados que iniciaron hace
  más de 2 años. Eliminando todos los datos de la base de datos que considere necesarios asociados a dichos trabajos.
 Debe considerarse eliminaciones múltiples.
 */
@@ -1347,9 +1347,50 @@ BEGIN
 		SELECT idTrab
 		FROM deleted
 	)
+END
+GO
+/*
+5c - Crear un trigger que solo permita insertar dos trabajos, uno como referencia del otro, 
+si tienen algún tema (palabras claves) en común. */
 
+CREATE TRIGGER tg_InsertarReferencias
+ON Referencias
+INSTEAD OF INSERT
+AS
+BEGIN	
+
+	DECLARE @trabajo VARCHAR(10)
+		
+	SELECT @trabajo = x.idTrab
+	FROM inserted x
+	WHERE idTrab IN(
+		SELECT idTrab
+		FROM TTags
+		WHERE idTag IN
+		(
+			SELECT idTag
+			FROM TTags
+			WHERE idTrab IN(
+				SELECT y.idTrabReferenciado
+				FROM inserted y
+			)
+		)
+	)
+
+	IF (@trabajo IS NOT NULL)
+	BEGIN 
+		INSERT INTO Referencias
+		SELECT idtrab, idTrabReferenciado
+		FROM inserted
+	END
+	ELSE
+	BEGIN
+		PRINT 'Los trabajos no tienen temas (palabras clave) en común.'
+	END	
 
 
 
 END
+
+
 
