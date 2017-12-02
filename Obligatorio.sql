@@ -889,31 +889,41 @@ VALUES('O2','O2')
 
 /* 4a - Crear una función que dada una universidad devuelva el último trabajo 
 publicado por esta. Si hay más de uno devolver uno cualquiera.*/
-/*
+
 CREATE FUNCTION fn_UltimoTrabajoPorUniv (@unaUniversidad VARCHAR(100))
-RETURNS VARCHAR(10)
+RETURNS VARCHAR(110)
 AS
 BEGIN
 	DECLARE @ultTrabajo VARCHAR(10)
+	DECLARE @nomTrabajo VARCHAR(100)
+	DECLARE @ret VARCHAR(110)
 
-	SELECT @ultTrabajo = idTrab 
-	FROM Trabajo 
-	WHERE lugarPublic IN 
+	SELECT @ultTrabajo = idTrab , @nomTrabajo = nomTrab
+	FROM Trabajo tr
+	WHERE tr.fechaInicio in (Select Max(fechaInicio) from Trabajo where lugarPublic IN 
 	(
 		SELECT idLugar
 		FROM Lugares
 		WHERE universidad = @unaUniversidad
-	)
+	))	
+	
+	 set @ret = @ultTrabajo + ' - ' + @nomTrabajo;
 
-
-RETURN @ultTrabajo
+RETURN @ret
 END
 GO
-*/
+
+declare @ultTrabUni VARCHAR(110);
+set @ultTrabUni = dbo.fn_UltimoTrabajoPorUniv('ORT')
+PRINT @ultTrabUni
+
+select * from Lugares
+select * from Trabajo
+
 /* 4b - Crear una función almacenada que reciba como parámetro un trabajo 
 y devuelva la cantidad de referencias externas que tiene.*/
 
-ALTER FUNCTION fn_CantReferenciasExt ( @unTrabajo VARCHAR(100))
+CREATE FUNCTION fn_CantReferenciasExt ( @unTrabajo VARCHAR(100))
 RETURNS INT
 AS
 BEGIN
@@ -950,6 +960,8 @@ declare @cantRef int;
 set @cantRef = dbo.fn_CantReferenciasExt('A0')
 PRINT @cantRef
 go
+
+
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
 /* 4c - Crear una función que reciba dos investigadores y devuelva 
@@ -978,8 +990,9 @@ END
 GO
 
 declare @cantTrabInvs int;
-set @cantTrabInvs = dbo.fn_CantTrabPublicados(1,9)
+set @cantTrabInvs = dbo.fn_CantTrabPublicados(6,8)
 PRINT @cantTrabInvs
+
 
 GO
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -1020,8 +1033,10 @@ END
 go
 
 declare @mensaje varchar(200)
-EXEC spu_UpdateCantTrab 7, @mensaje output
+EXEC spu_UpdateCantTrab 9, @mensaje output
 print @mensaje
+
+select * from Investigador
 
 go
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -1053,14 +1068,15 @@ WHERE idTrab in (
 					SELECT idLugar
 					from Lugares
 					where (tipoLugar = 'Revistas' or tipoLugar = 'Libros')
-					AND año >= @anio1 AND año <= @anio2
+					AND año BETWEEN @anio1 AND @anio2
 )
 RETURN @cantidad
 END
 
 declare @cantTrabInvs int;
-set @cantTrabInvs = dbo.fn_CantTrbjAniosClave(2015, 2016, 'Caca')
+set @cantTrabInvs = dbo.fn_CantTrbjAniosClave(2015, 2016, 'Popoi')
 PRINT @cantTrabInvs
+
 
 go
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -1069,32 +1085,32 @@ go
 CREATE FUNCTION fn_NuevoIdentTipoTrabajo(
 @elTipoTrabajo varchar(50)
 )
-RETURNS VARCHAR(10)
+RETURNS VARCHAR(150)
 AS
 BEGIN
-	DECLARE @ret VARCHAR(10);
+	DECLARE @ret VARCHAR(150);
 	declare @alphaNumID varchar(10);
 	IF(@elTipoTrabajo LIKE 'poster' OR @elTipoTrabajo LIKE 'articulo' OR @elTipoTrabajo LIKE 'capitulo' OR @elTipoTrabajo LIKE 'OTRO')
     BEGIN
 		select @alphaNumID = UPPER(SUBSTRING(@elTipoTrabajo, 1, 1));
 		declare @ultINS int;
 		set @ultINS = (select COUNT(*) from Trabajo where tipoTrab = @elTipoTrabajo);
-		set @ultINS = @ultINS +1;
 
 		set @ret = @alphaNumID + CONVERT(varchar(10), @ultINS);
 	END
-	/*ELSE
+	ELSE
 	BEGIN
-		PRINT 'El parametro ingresado no corresponde a un tipo de trabajo valido.'
-	END*/
+		set @ret ='El parametro ingresado no corresponde a un tipo de trabajo valido.';
+	END
 RETURN @ret
 END
 GO
 
-declare @nueviTipo varchar(50);
+declare @nueviTipo varchar(150);
 set @nueviTipo = dbo.fn_NuevoIdentTipoTrabajo('poster')
 PRINT @nueviTipo
 GO
+
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*
@@ -1129,7 +1145,7 @@ BEGIN
 			AND lg.universidad = @laUniversidad
 		)
 	)
-set @ret = @nombre+CONVERT(varchar(1), @nivelLugar)+CONVERT(varchar(2), @diaIni)+CONVERT(varchar(2), @mes)+CONVERT(varchar(4), @anio)
+set @ret = @nombre+ ' - Nivel Lugar:'+CONVERT(varchar(1), @nivelLugar)+ ' - Fecha: '+CONVERT(varchar(2), @diaIni)+'/'+CONVERT(varchar(2), @mes)+'/'+CONVERT(varchar(4), @anio)
 RETURN @ret
 END
 
