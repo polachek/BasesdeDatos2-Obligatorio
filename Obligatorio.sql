@@ -1399,29 +1399,17 @@ operación.*/
 CREATE TABLE LogInsertAndUpdate (
 	lugar INT,
 	operacion VARCHAR(3) CHECK (operacion IN ('INS', 'UPD')),
-	usuario VARCHAR,
+	usuario VARCHAR(50),
 	fechaOperacion date
 )
 GO
 
-CREATE TRIGGER tg_AuditarInsOrUpd
+ALTER TRIGGER tg_AuditarInsOrUpd
 ON Lugares
 AFTER INSERT, UPDATE
 AS
 BEGIN
-	DECLARE @lugar INT
-
-	IF(EXISTS (
-		SELECT * 
-		FROM inserted 
-		WHERE idLugar IN 
-			(
-				SELECT lugarPublic
-				FROM Trabajo
-			)
-		)
-	)
-	BEGIN
+		DECLARE @lugar INT
 		SELECT @lugar = idLugar
 		FROM inserted
 		
@@ -1432,13 +1420,51 @@ BEGIN
 		END
 		ELSE IF(EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted))
 		BEGIN
-			INSERT INTO LogInsertAndUpdate
-			VALUES (@lugar, 'INS', USER, GETDATE())
+
+			IF(EXISTS (
+			SELECT * 
+			FROM inserted 
+			WHERE idLugar IN 
+				(
+					SELECT lugarPublic
+					FROM Trabajo
+				)
+			)
+			)
+			BEGIN
+					INSERT INTO LogInsertAndUpdate
+					VALUES (@lugar, 'UPD', USER, GETDATE())
+			END
 		END
-	END
+
 END
 
+select * from LogInsertAndUpdate
+select * from Trabajo
+
+update Lugares set nombre = 'Teatro Solis' where idLugar = 1
+INSERT INTO Lugares
+VALUES(6, 'Test Log', 1, 2014, 8, 8, null, 'https://www.dazzlerhoteles.com', 'UBA', 'Revistas');
 
 
+
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+/*                              SE PIDE #6                      		  */
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+
+/*
+a. Mostrar, para cada trabajo publicado con mas de 3 autores, 
+el identificador del trabajo, nombre del mismo, la cantidad de autores que tiene, 
+y lugar donde se publico (id y nombre).
+*/
+
+select t.idTrab as 'Identificador del trabajo', t.nomTrab as 'Nombre de Trabajo', Count(distinct ta.idInvestigador) as 'Cantidad de Autores', l.idLugar as 'Id Lugar', l.nombre as 'Nombe del Lugar'
+From Trabajo t, Lugares l, TAutores ta
+where t.lugarPublic = l.idLugar and t.idTrab = ta.idTrab
+group by t.idTrab,t.nomTrab, l.idLugar, l.nombre  having count(*) > 3
 
 
