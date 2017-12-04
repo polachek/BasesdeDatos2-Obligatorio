@@ -1509,6 +1509,8 @@ AND l.universidad IN (
 AND l.nivelLugar = 4
 AND l.año > YEAR(GETDATE())-5
 AND l.tipoLugar LIKE 'Congresos'
+GROUP BY u.nombre
+HAVING COUNT(*) > 2 
 
 
 
