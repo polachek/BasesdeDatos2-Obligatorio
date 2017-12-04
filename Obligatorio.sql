@@ -1496,7 +1496,7 @@ ORDER BY (t.palabra)
 de las universidades que han realizado más de 2 congresos de nivel 4, 
 en los ultimos 5 años, con mas de 20 trabajos publicados en esos congresos. */
 
-SELECT DISTINCT u.*, l.link
+SELECT DISTINCT u.nombre, l.link
 FROM Universidad u, Lugares l
 WHERE u.nombre = l.universidad
 AND l.universidad IN (
@@ -1512,7 +1512,7 @@ AND l.tipoLugar LIKE 'Congresos'
 GROUP BY u.nombre
 HAVING COUNT(*) > 2 
 
-/* d- . Obtener para cada investigador el ultimo trabajo 
+/* d- Obtener para cada investigador el ultimo trabajo 
 que inicio en el cual fue/es autor principal.*/
 
 SELECT i.idInvestigador
@@ -1521,6 +1521,14 @@ ON i.idInvestigador = ta.idInvestigador
 LEFT OUTER JOIN Trabajo t 
 ON ta.idTrab = t.idTrab
 WHERE ta.rolinvestig = 'autor-ppal'
+AND t.idTrab IN 
+(
+	SELECT 	TOP 1 x.idTrab
+	FROM Trabajo x, TAutores y
+	WHERE x.idTrab = y.idTrab
+	AND i.idInvestigador = y.idInvestigador
+	ORDER BY fechaInicio DESC
+)
 
 
 
