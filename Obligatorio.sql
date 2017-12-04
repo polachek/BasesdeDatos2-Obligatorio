@@ -1538,47 +1538,10 @@ en los últimos 5 años, en la carrera de Ingeniería. */
 
 
 SELECT DISTINCT i.idInvestigador, i.nombre, i.idUniversidad, 
-(
-	SELECT COUNT(*)
-	FROM Lugares lu, Investigador inv, TAutores x
-	WHERE lu.universidad = inv.idUniversidad
-	AND inv.idInvestigador = x.idInvestigador
-	AND lu.nivelLugar = 1
-	AND inv.idInvestigador = i.idInvestigador
-	AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
-	AND inv.carrera LIKE 'Ingeniería'
-) as 'Cantidad trabajos nivel 1',
-(
-	SELECT COUNT(*)
-	FROM Lugares lu, Investigador inv, TAutores x
-	WHERE lu.universidad = inv.idUniversidad
-	AND inv.idInvestigador = x.idInvestigador
-	AND lu.nivelLugar = 2
-	AND inv.idInvestigador = i.idInvestigador
-	AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
-	AND inv.carrera LIKE 'Ingeniería'
-) as 'Cantidad trabajos nivel 2',
-(
-	SELECT COUNT(*)
-	FROM Lugares lu, Investigador inv, TAutores x
-	WHERE lu.universidad = inv.idUniversidad
-	AND inv.idInvestigador = x.idInvestigador
-	AND lu.nivelLugar = 3
-	AND inv.idInvestigador = i.idInvestigador
-	AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
-	AND inv.carrera LIKE 'Ingeniería'
-) as 'Cantidad trabajos nivel 3',
-(
-	SELECT COUNT(*)
-	FROM Lugares lu, Investigador inv, TAutores x
-	WHERE lu.universidad = inv.idUniversidad
-	AND inv.idInvestigador = x.idInvestigador
-	AND lu.nivelLugar = 4
-	AND inv.idInvestigador = i.idInvestigador
-	AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
-	AND inv.carrera LIKE 'Ingeniería'
-) as 'Cantidad trabajos nivel 4'
-
+dbo.fn_CantTrabajoPorNivel(1, i.idInvestigador) as 'Cantidad trabajos nivel 1',
+dbo.fn_CantTrabajoPorNivel(2, i.idInvestigador) as 'Cantidad trabajos nivel 2',
+dbo.fn_CantTrabajoPorNivel(3, i.idInvestigador) as 'Cantidad trabajos nivel 3',
+dbo.fn_CantTrabajoPorNivel(4, i.idInvestigador) as 'Cantidad trabajos nivel 4'
 FROM Investigador i LEFT OUTER JOIN TAutores ta
 ON i.idInvestigador = ta.idInvestigador 
 LEFT OUTER JOIN Trabajo t 
@@ -1587,8 +1550,9 @@ LEFT OUTER JOIN Lugares l
 ON t.lugarPublic = l.idLugar
 
 
-CREATE FUNCTION fn_CantTrabajoPorNivel(
-@nivelLugar int
+alter FUNCTION fn_CantTrabajoPorNivel(
+@nivelLugar int,
+@idInv int
 )
 RETURNS int
 AS
@@ -1598,18 +1562,14 @@ BEGIN
 	FROM Lugares lu, Investigador inv, TAutores x, Trabajo t
 	WHERE lu.universidad = inv.idUniversidad
 	AND inv.idInvestigador = x.idInvestigador
-	AND lu.nivelLugar = 1
+	AND lu.nivelLugar = @nivelLugar
 	AND x.idTrab = t.idTrab
-	/*AND inv.idInvestigador = i.idInvestigador*/
+	AND inv.idInvestigador = @idInv
 	AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
 	AND inv.carrera LIKE 'Ingeniería'
 	RETURN @ret
 END
 
 
-select * from Investigador
-select * from TAutores
-
-update Investigador set carrera='Ingeniería' where carrera = 'Panchero'
 
 
