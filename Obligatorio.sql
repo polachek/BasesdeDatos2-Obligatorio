@@ -1471,7 +1471,7 @@ HAVING COUNT(*) > 3
 /*
 b. Obtener la lista de palabras claves que aparecen en trabajos sobre 'BASE DE DATOS'
 (palabra clave) publicados en revistas del año actual. La salida debe aparecer
-ordenado alfabéticamente, sin repetidos.
+ordenado alfabéticamente, sin repetidos.	
 */
 
 SELECT DISTINCT t.palabra
@@ -1491,5 +1491,24 @@ AND w.idTrab IN(
 	)
 )
 ORDER BY (t.palabra)
+
+/* c - Mostrar los datos de las universidades y el link a los congresos, 
+de las universidades que han realizado más de 2 congresos de nivel 4, 
+en los ultimos 5 años, con mas de 20 trabajos publicados en esos congresos. */
+
+SELECT DISTINCT u.*, l.link
+FROM Universidad u, Lugares l
+WHERE u.nombre = l.universidad
+AND l.universidad IN (
+	SELECT x.universidad
+	FROM Lugares x
+	WHERE x.tipoLugar LIKE 'Congresos'
+	GROUP BY x.universidad
+	HAVING COUNT (*) > 20
+)
+AND l.nivelLugar = 4
+AND l.año > YEAR(GETDATE())-5
+AND l.tipoLugar LIKE 'Congresos'
+
 
 
