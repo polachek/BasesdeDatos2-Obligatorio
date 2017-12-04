@@ -1600,7 +1600,7 @@ Solucionar usando la función a).*/
 
 SELECT dbo.fn_UltimoTrabajoPorUniv(l.universidad)
 FROM Trabajo t, Lugares l
-WHERE t.lugarPublic = l.universidad
+WHERE t.lugarPublic = l.idLugar
 
 
 
