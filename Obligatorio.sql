@@ -1598,9 +1598,10 @@ AND YEAR(t.fechaInicio) = YEAR(GETDATE())
 los datos del último trabajo publicado. 
 Solucionar usando la función a).*/
 
-SELECT dbo.fn_UltimoTrabajoPorUniv(l.universidad)
-FROM Trabajo t, Lugares l
+SELECT DISTINCT U.nombre , dbo.fn_UltimoTrabajoPorUniv(l.universidad) AS 'Datos de Trabajo publicado'
+FROM Trabajo t, Lugares l, Universidad u
 WHERE t.lugarPublic = l.idLugar
+AND U.nombre = L.universidad
 
 
 
