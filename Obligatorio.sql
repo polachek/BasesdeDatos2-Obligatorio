@@ -1512,5 +1512,16 @@ AND l.tipoLugar LIKE 'Congresos'
 GROUP BY u.nombre
 HAVING COUNT(*) > 2 
 
+/* d- . Obtener para cada investigador el ultimo trabajo 
+que inicio en el cual fue/es autor principal.*/
+
+SELECT i.idInvestigador
+FROM Investigador i LEFT OUTER JOIN TAutores ta 
+ON i.idInvestigador = ta.idInvestigador
+LEFT OUTER JOIN Trabajo t 
+ON ta.idTrab = t.idTrab
+WHERE ta.rolinvestig = 'autor-ppal'
+
+
 
 
