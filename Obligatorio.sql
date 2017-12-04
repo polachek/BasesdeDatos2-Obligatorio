@@ -1627,7 +1627,7 @@ sean investigadores de la universidad anfitriona del congreso.*/
 
 CREATE VIEW View_ListaCongresos
 AS
-SELECT lu.tipoLugar, COUNT(tra.idTrab)
+SELECT lu.tipoLugar, COUNT(tra.idTrab) AS 'Cantidad de trabajos'
 FROM Lugares lu, Investigador inv, TAutores x, Trabajo tra
 WHERE lu.idLugar = tra.lugarPublic
 AND inv.idInvestigador = x.idInvestigador
@@ -1643,3 +1643,6 @@ AND tra.idTrab NOT IN (
 GROUP BY lu.tipoLugar
 
 
+/* b- Realizar una vista que muestre para cada Investigador, 
+para cada tipo de trabajo la fecha de inicio del primer y último trabajo. 
+Todas los investigadores deben aparecer en el resultado, aunque no tengan trabajos que cumplan las condiciones.*/
