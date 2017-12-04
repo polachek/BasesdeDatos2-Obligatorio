@@ -1530,6 +1530,26 @@ AND t.idTrab IN
 	ORDER BY fechaInicio DESC
 )
 
+/* e - Para cada investigador mostrar, su identificación, 
+nombre, nombre de la universidad a la que pertenece, 
+y la cantidad de trabajos suyos publicados en lugares de nivel 1, 
+de nivel 2, de nivel 3 y de nivel 4, 
+en los últimos 5 años, en la carrera de Ingeniería. */
+
+
+SELECT DISTINCT i.idInvestigador, i.nombre, i.idUniversidad, 
+(SELECT COUNT(*)
+FROM Lugares lu, Investigador inv
+WHERE lu.universidad = inv.idUniversidad
+AND lu.nivelLugar = 1
+AND inv.idInvestigador = i.idInvestigador
+)
+FROM Investigador i LEFT OUTER JOIN TAutores ta
+ON i.idInvestigador = ta.idInvestigador 
+LEFT OUTER JOIN Trabajo t 
+ON ta.idTrab = t.idTrab
+LEFT OUTER JOIN Lugares l
+ON t.lugarPublic = l.idLugar
 
 
 
