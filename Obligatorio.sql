@@ -1603,5 +1603,16 @@ FROM Trabajo t, Lugares l, Universidad u
 WHERE t.lugarPublic = l.idLugar
 AND U.nombre = L.universidad
 
+/* h- Eliminar las palabras claves no usadas en los trabajos.*/
+
+DELETE FROM Tags
+WHERE idTag NOT IN
+(
+	SELECT idtag
+	FROM TTags
+)
+
+
+
 
 
