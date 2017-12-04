@@ -1627,7 +1627,7 @@ sean investigadores de la universidad anfitriona del congreso.*/
 
 CREATE VIEW View_ListaCongresos
 AS
-SELECT lu.tipoLugar
+SELECT lu.tipoLugar, COUNT(tra.idTrab)
 FROM Lugares lu, Investigador inv, TAutores x, Trabajo tra
 WHERE lu.idLugar = tra.lugarPublic
 AND inv.idInvestigador = x.idInvestigador
@@ -1640,5 +1640,6 @@ AND tra.idTrab NOT IN (
 	AND t.lugarPublic = l.idLugar
 	AND i.idUniversidad = inv.idUniversidad
 )
+GROUP BY lu.tipoLugar
 
 
