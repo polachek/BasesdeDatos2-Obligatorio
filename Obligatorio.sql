@@ -1538,11 +1538,13 @@ en los últimos 5 años, en la carrera de Ingeniería. */
 
 
 SELECT DISTINCT i.idInvestigador, i.nombre, i.idUniversidad, 
-(SELECT COUNT(*)
-FROM Lugares lu, Investigador inv
-WHERE lu.universidad = inv.idUniversidad
-AND lu.nivelLugar = 1
-AND inv.idInvestigador = i.idInvestigador
+(
+	SELECT COUNT(*)
+	FROM Lugares lu, Investigador inv, TAutores x
+	WHERE lu.universidad = inv.idUniversidad
+	AND inv.idInvestigador = x.idInvestigador
+	AND lu.nivelLugar = 1
+	AND inv.idInvestigador = i.idInvestigador
 )
 FROM Investigador i LEFT OUTER JOIN TAutores ta
 ON i.idInvestigador = ta.idInvestigador 
@@ -1551,5 +1553,14 @@ ON ta.idTrab = t.idTrab
 LEFT OUTER JOIN Lugares l
 ON t.lugarPublic = l.idLugar
 
+
+SELECT inv.idInvestigador, inv.nombre, inv.idUniversidad, inv.cantTrabPub, lu.nivelLugar
+FROM Lugares lu, Investigador inv, TAutores x, Trabajo t
+WHERE lu.universidad = inv.idUniversidad
+AND x.idInvestigador = inv.idInvestigador
+AND t.idTrab = x.idTrab
+AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
+AND inv.carrera LIKE 'Ingeniería'
+GROUP BY inv.idInvestigador, inv.nombre, inv.idUniversidad, lu.nivelLugar
 
 
