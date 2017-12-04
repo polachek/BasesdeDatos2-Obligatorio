@@ -1570,6 +1570,27 @@ BEGIN
 	RETURN @ret
 END
 
+/* f - Para la universidad “ORT” mostrar el identificador de sus investigadores 
+que tienen algún trabajo en el año actual y la cantidad de trabajos 
+publicados en congresos de nivel 4. 
+En caso de investigadores sin trabajos publicados en estos congresos pero con
+trabajos en proceso el año actual deben aparecer en el resultado.*/
+
+SELECT i.idInvestigador, (
+	SELECT COUNT(*)
+	FROM Lugares lu, Investigador inv, TAutores x
+	WHERE lu.universidad = inv.idUniversidad
+	AND inv.idInvestigador = x.idInvestigador
+	AND lu.nivelLugar = 4  
+	AND inv.idInvestigador = i.idInvestigador
+	AND inv.idUniversidad LIKE 'ORT'
+) AS 'Cant. de Trabajos en ORT para Nivel 4'
+FROM Investigador i LEFT OUTER JOIN TAutores ta
+ON i.idInvestigador = ta.idInvestigador
+LEFT OUTER JOIN Trabajo t
+ON ta.idTrab = t.idTrab
+WHERE i.idUniversidad LIKE 'ORT'
+AND YEAR(t.fechaInicio) = YEAR(GETDATE())
 
 
 
