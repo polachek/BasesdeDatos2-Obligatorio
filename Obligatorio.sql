@@ -1545,7 +1545,40 @@ SELECT DISTINCT i.idInvestigador, i.nombre, i.idUniversidad,
 	AND inv.idInvestigador = x.idInvestigador
 	AND lu.nivelLugar = 1
 	AND inv.idInvestigador = i.idInvestigador
-)
+	AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
+	AND inv.carrera LIKE 'Ingeniería'
+) as 'Cantidad trabajos nivel 1',
+(
+	SELECT COUNT(*)
+	FROM Lugares lu, Investigador inv, TAutores x
+	WHERE lu.universidad = inv.idUniversidad
+	AND inv.idInvestigador = x.idInvestigador
+	AND lu.nivelLugar = 2
+	AND inv.idInvestigador = i.idInvestigador
+	AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
+	AND inv.carrera LIKE 'Ingeniería'
+) as 'Cantidad trabajos nivel 2',
+(
+	SELECT COUNT(*)
+	FROM Lugares lu, Investigador inv, TAutores x
+	WHERE lu.universidad = inv.idUniversidad
+	AND inv.idInvestigador = x.idInvestigador
+	AND lu.nivelLugar = 3
+	AND inv.idInvestigador = i.idInvestigador
+	AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
+	AND inv.carrera LIKE 'Ingeniería'
+) as 'Cantidad trabajos nivel 3',
+(
+	SELECT COUNT(*)
+	FROM Lugares lu, Investigador inv, TAutores x
+	WHERE lu.universidad = inv.idUniversidad
+	AND inv.idInvestigador = x.idInvestigador
+	AND lu.nivelLugar = 4
+	AND inv.idInvestigador = i.idInvestigador
+	AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
+	AND inv.carrera LIKE 'Ingeniería'
+) as 'Cantidad trabajos nivel 4'
+
 FROM Investigador i LEFT OUTER JOIN TAutores ta
 ON i.idInvestigador = ta.idInvestigador 
 LEFT OUTER JOIN Trabajo t 
@@ -1554,13 +1587,29 @@ LEFT OUTER JOIN Lugares l
 ON t.lugarPublic = l.idLugar
 
 
-SELECT inv.idInvestigador, inv.nombre, inv.idUniversidad, inv.cantTrabPub, lu.nivelLugar
-FROM Lugares lu, Investigador inv, TAutores x, Trabajo t
-WHERE lu.universidad = inv.idUniversidad
-AND x.idInvestigador = inv.idInvestigador
-AND t.idTrab = x.idTrab
-AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
-AND inv.carrera LIKE 'Ingeniería'
-GROUP BY inv.idInvestigador, inv.nombre, inv.idUniversidad, lu.nivelLugar
+CREATE FUNCTION fn_CantTrabajoPorNivel(
+@nivelLugar int
+)
+RETURNS int
+AS
+BEGIN
+	DECLARE @ret int
+	SELECT @ret = COUNT(*)
+	FROM Lugares lu, Investigador inv, TAutores x, Trabajo t
+	WHERE lu.universidad = inv.idUniversidad
+	AND inv.idInvestigador = x.idInvestigador
+	AND lu.nivelLugar = 1
+	AND x.idTrab = t.idTrab
+	/*AND inv.idInvestigador = i.idInvestigador*/
+	AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
+	AND inv.carrera LIKE 'Ingeniería'
+	RETURN @ret
+END
+
+
+select * from Investigador
+select * from TAutores
+
+update Investigador set carrera='Ingeniería' where carrera = 'Panchero'
 
 
