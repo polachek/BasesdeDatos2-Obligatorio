@@ -1578,11 +1578,13 @@ trabajos en proceso el año actual deben aparecer en el resultado.*/
 
 SELECT i.idInvestigador, (
 	SELECT COUNT(*)
-	FROM Lugares lu, Investigador inv, TAutores x
-	WHERE lu.universidad = inv.idUniversidad
+	FROM Lugares lu, Investigador inv, TAutores x, Trabajo tra
+	WHERE lu.idLugar = tra.lugarPublic
 	AND inv.idInvestigador = x.idInvestigador
-	AND lu.nivelLugar = 4  
+	AND tra.idTrab = x.idTrab
 	AND inv.idInvestigador = i.idInvestigador
+	AND lu.nivelLugar = 4  
+	AND lu.tipoLugar = 'Congresos'
 	AND inv.idUniversidad LIKE 'ORT'
 ) AS 'Cant. de Trabajos en ORT para Nivel 4'
 FROM Investigador i LEFT OUTER JOIN TAutores ta
@@ -1591,6 +1593,14 @@ LEFT OUTER JOIN Trabajo t
 ON ta.idTrab = t.idTrab
 WHERE i.idUniversidad LIKE 'ORT'
 AND YEAR(t.fechaInicio) = YEAR(GETDATE())
+
+/* g - Mostrar para cada universidad que tiene trabajos publicados, 
+los datos del último trabajo publicado. 
+Solucionar usando la función a).*/
+
+SELECT dbo.fn_UltimoTrabajoPorUniv(l.universidad)
+FROM Trabajo t, Lugares l
+WHERE t.lugarPublic = l.universidad
 
 
 
