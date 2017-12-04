@@ -1611,8 +1611,34 @@ WHERE idTag NOT IN
 	SELECT idtag
 	FROM TTags
 )
+GO
 
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
+/*                              SE PIDE #7                       		  */
+/*########################################################################*/
+/*########################################################################*/
+/*########################################################################*/
 
+/* a- Realizar una vista que muestre lista de Congresos y 
+para cada uno la cantidad de trabajos publicados que no tienen autores que 
+sean investigadores de la universidad anfitriona del congreso.*/
 
+CREATE VIEW View_ListaCongresos
+AS
+SELECT lu.tipoLugar
+FROM Lugares lu, Investigador inv, TAutores x, Trabajo tra
+WHERE lu.idLugar = tra.lugarPublic
+AND inv.idInvestigador = x.idInvestigador
+AND tra.idTrab = x.idTrab
+AND tra.idTrab NOT IN (
+	SELECT t.idTrab
+	FROM Investigador i, Trabajo t, TAutores ta, Lugares l
+	WHERE t.idTrab = ta.idTrab
+	AND i.idInvestigador = ta.idInvestigador
+	AND t.lugarPublic = l.idLugar
+	AND i.idUniversidad = inv.idUniversidad
+)
 
 
