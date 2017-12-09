@@ -407,8 +407,8 @@ GO
 /*-------------------------------------------------------------------------*/
 /* Disparador para controlar que diaFin no sea nulo cuando tipolugar tiene 
 valor 'Congresos' en tabla LUGARES*/
-/*
-CREATE TRIGGER EvitarDiaFinNulo_LUGARES
+
+alter TRIGGER EvitarDiaFinNulo_LUGARES
 ON Lugares
 INSTEAD OF INSERT
 AS
@@ -424,12 +424,13 @@ BEGIN
 		SELECT @anio = CAST(año AS VARCHAR(4)) FROM inserted
 		SELECT @mes = CAST(mes AS VARCHAR(2)) FROM inserted
 		SELECT @diaIni = CAST(diaIni AS varchar(2)) FROM inserted		
-		SET @fechaInicio = CONVERT(date, @anio+@mes+@diaIni)
+		SET @fechaInicio = CONVERT(date, @anio+'-'+@mes+'-'+@diaIni)
 		
 		IF(EXISTS (SELECT tipoLugar from inserted WHERE tipoLugar LIKE 'Congresos')  AND NOT EXISTS (SELECT diaFin FROM inserted WHERE diafin IS NULL))
 		BEGIN
+
 			SELECT @diaFin = CAST(diaFin AS VARCHAR(2)) FROM inserted
-			SET @fechaFin = CONVERT(date, @anio+@mes+@diaFin)
+			SET @fechaFin = CONVERT(date, @anio+'-'+@mes+'-'+@diaFin)
 			SET @fechaActual = GETDATE()
 			IF(@fechaInicio < @fechaFin AND @fechaInicio < @fechaActual)
 			BEGIN
@@ -448,7 +449,6 @@ BEGIN
 		END
 
 END
-*/
 
 
 /*########################################################################*/
