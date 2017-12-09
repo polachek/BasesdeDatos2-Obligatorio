@@ -436,7 +436,15 @@ BEGIN
 		SELECT @mes = CAST(mes AS VARCHAR(2)) FROM inserted
 		SELECT @diaIni = CAST(diaIni AS varchar(2)) FROM inserted		
 		SET @fechaInicio = CONVERT(date, @anio+'-'+@mes+'-'+@diaIni)
-		
+
+		IF(EXISTS (SELECT tipoLugar from inserted WHERE tipoLugar NOT LIKE 'Congresos') AND EXISTS(SELECT diaFin FROM inserted WHERE diafin IS NULL AND tipoLugar NOT LIKE 'Congresos'))
+		BEGIN
+			INSERT Lugares
+			SELECT idLugar = inserted.idLugar, nombre = inserted.nombre, nivelLugar = inserted.nivelLugar, año = inserted.año, mes = inserted.mes, diaIni = inserted.diaIni, diaFin = null, link = inserted.link, universidad = inserted.universidad, tipoLugar = inserted.tipoLugar
+			FROM inserted
+		END
+
+		ELSE
 		IF(EXISTS (SELECT tipoLugar from inserted WHERE tipoLugar LIKE 'Congresos')  AND NOT EXISTS (SELECT diaFin FROM inserted WHERE diafin IS NULL AND tipoLugar LIKE 'Congresos'))
 		BEGIN
 
@@ -522,7 +530,7 @@ VALUES
 (3, 'Radisson Victoria Plaza Hotel', 4, 2015, 5, 20, null, 'https://www.radissonblu.com', 'UM', 'Libros'),
 (4, 'Holiday Inn', 2, 2017, 2, 10, 16, 'https://www.ihg.com', 'UCUDAL', 'Congresos'),
 (5, 'Hotel Dazzler', 1, 2014, 8, 8, null, 'https://www.dazzlerhoteles.com', 'UBA', 'Revistas')
-select * from Lugares
+
 
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
