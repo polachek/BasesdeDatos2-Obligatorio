@@ -437,7 +437,7 @@ BEGIN
 		SELECT @diaIni = CAST(diaIni AS varchar(2)) FROM inserted		
 		SET @fechaInicio = CONVERT(date, @anio+'-'+@mes+'-'+@diaIni)
 		
-		IF(EXISTS (SELECT tipoLugar from inserted WHERE tipoLugar LIKE 'Congresos')  AND NOT EXISTS (SELECT diaFin FROM inserted WHERE diafin IS NULL))
+		IF(EXISTS (SELECT tipoLugar from inserted WHERE tipoLugar LIKE 'Congresos')  AND NOT EXISTS (SELECT diaFin FROM inserted WHERE diafin IS NULL AND tipoLugar LIKE 'Congresos'))
 		BEGIN
 
 			SELECT @diaFin = CAST(diaFin AS VARCHAR(2)) FROM inserted
@@ -509,6 +509,7 @@ VALUES
 ('Universidad de Amazonas', 'Brasil', 'Amazonas', '35358978')
 
 
+
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                           Tabla LUGARES                                  */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -521,6 +522,7 @@ VALUES
 (3, 'Radisson Victoria Plaza Hotel', 4, 2015, 5, 20, null, 'https://www.radissonblu.com', 'UM', 'Libros'),
 (4, 'Holiday Inn', 2, 2017, 2, 10, 16, 'https://www.ihg.com', 'UCUDAL', 'Congresos'),
 (5, 'Hotel Dazzler', 1, 2014, 8, 8, null, 'https://www.dazzlerhoteles.com', 'UBA', 'Revistas')
+select * from Lugares
 
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -554,6 +556,7 @@ VALUES
 ('Investigacion sobre las drogas', 'La drogadicción es una enfermedad que consiste en la dependencia de sustancias que afectan el sistema nervioso central y las funciones cerebrales', 'articulo', '2017-05-17', 'https://www.monografias.com/docs/Investigacion-sobre-las-drogas-FKJQBHKYMZ',4, 'id'),
 ('Investigacion sobre medio ambiente ', 'El análisis de lo ambiental desde la perspectiva de lo social', 'Otro', '2017-08-20', 'http://cis.ufro.cl/index.php?option=com_content&view=article&id=45&Itemid=34',5, 'id'),
 ('Investigacion sobre Cultura maya ', 'La civilización maya es sin duda la más fascinante de las antiguas culturas americanas', 'Otro', '2017-04-28', 'https://www.biografiasyvidas.com/historia/cultura_maya.htm',5, 'id')
+
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TAGS                                  */
