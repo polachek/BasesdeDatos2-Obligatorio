@@ -191,7 +191,7 @@ GO
 /*-------------------------------------------------------------------------*/
 /*Disparador para generar ID Trabajo */
 
-ALTER TRIGGER trig_idTrab
+CREATE TRIGGER trig_idTrab
 ON Trabajo
 INSTEAD OF INSERT
 AS
@@ -236,41 +236,49 @@ AS
 BEGIN
 	DECLARE @contador INT,
 			@maximo INT	
-	IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted))
-	BEGIN	
-	    IF (NOT EXISTS( SELECT * FROM Tags))
+    IF( NOT EXISTS( Select COUNT(*) From inserted having count(*) > 1))
+	BEGIN
+		IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted))
+		BEGIN	
+			IF (NOT EXISTS( SELECT * FROM Tags))
+			 BEGIN
+				SET @maximo = 1
+				INSERT Tags
+				SELECT idtag = @maximo, palabra = inserted.palabra
+				FROM inserted
+			 END
+			ELSE
+			 BEGIN
+			  SELECT @maximo = MAX(idtag) FROM Tags
+				IF((@maximo >= 2 AND @maximo%2 = 1) OR @maximo = 1)
+				BEGIN
+					SET @maximo = @maximo + 2
+					INSERT Tags
+					SELECT idtag = @maximo, palabra = inserted.palabra
+					FROM inserted
+				END
+				ELSE IF((@maximo >= 2 AND @maximo%2 = 0))
+				BEGIN
+					SET @maximo = @maximo + 1
+					INSERT Tags
+					SELECT idtag = @maximo, palabra = inserted.palabra
+					FROM inserted
+				END 
+			 END
+		END
+		ELSE IF(EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted))
 		 BEGIN
-		    SET @maximo = 1
-			INSERT Tags
-			SELECT idtag = @maximo, palabra = inserted.palabra
-			FROM inserted
+			UPDATE Tags
+			set palabra = inserted.palabra
+			from inserted
+			where Tags.idtag = inserted.idtag
 		 END
-		ELSE
-		 BEGIN
-		  SELECT @maximo = MAX(idtag) FROM Tags
-			IF((@maximo >= 2 AND @maximo%2 = 1) OR @maximo = 1)
-			BEGIN
-				SET @maximo = @maximo + 2
-				INSERT Tags
-				SELECT idtag = @maximo, palabra = inserted.palabra
-				FROM inserted
-			END
-			ELSE IF((@maximo >= 2 AND @maximo%2 = 0))
-			BEGIN
-				SET @maximo = @maximo + 1
-				INSERT Tags
-				SELECT idtag = @maximo, palabra = inserted.palabra
-				FROM inserted
-			END 
-	     END
-	END
-	ELSE IF(EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted))
-	 BEGIN
-		UPDATE Tags
-		set palabra = inserted.palabra
-		from inserted
-		where Tags.idtag = inserted.idtag
-	 END	 
+
+		 END
+		 ELSE
+		  BEGIN
+				PRINT 'Se debe realizar de a una insercion or vez'
+		  END	 
 END
 GO
 /*-------------------------------------------------------------------------*/
@@ -576,13 +584,12 @@ INSERT INTO Trabajo
 VALUES
 ('Investigacion sobre medio ambiente ', 'El análisis de lo ambiental desde la perspectiva de lo social', 'Otro', '2017-08-20', 'http://cis.ufro.cl/index.php?option=com_content&view=article&id=45&Itemid=34',5, 'id')
 
-
 INSERT INTO Trabajo
 VALUES
-('Investigacion sobre las drogas', 'La drogadicción es una enfermedad que consiste en la dependencia de sustancias que afectan el sistema nervioso central y las funciones cerebrales', 'articulo', '2017-05-17', 'https://www.monografias.com/docs/Investigacion-sobre-las-drogas-FKJQBHKYMZ',4, 'id'),
+('Investigacion sobre las drogas', 'La drogadicción es una enfermedad que consiste en la dependencia de sustancias que afectan el sistema nervioso central y las funciones cerebrales', 'articulo', '2017-05-17', 'https://www.monografias.com/docs/Investigacion-sobre-las-drogas-FKJQBHKYMZ',4, 'id')
+INSERT INTO Trabajo
+VALUES
 ('Investigacion sobre Cultura maya ', 'La civilización maya es sin duda la más fascinante de las antiguas culturas americanas', 'Otro', '2017-04-28', 'https://www.biografiasyvidas.com/historia/cultura_maya.htm',5, 'id')
-select * from Trabajo
-delete from Trabajo
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TAGS                                  */
