@@ -618,7 +618,7 @@ VALUES
 ('P0','O0'),
 ('A0','A1')
 
-
+GO
 /*########################################################################*/
 /*########################################################################*/
 /*########################################################################*/
@@ -660,6 +660,7 @@ PRINT @ultTrabUni
 select * from Lugares
 select * from Trabajo
 
+GO
 /* 4b - Crear una función almacenada que reciba como parámetro un trabajo 
 y devuelva la cantidad de referencias externas que tiene.*/
 
@@ -691,10 +692,6 @@ BEGIN
 RETURN @cantReferencias
 END
 GO
-
-declare @cantRef int;
-set @cantRef = dbo.fn_CantReferenciasExt('P0')
-PRINT @cantRef
 
 declare @cantRef int;
 set @cantRef = dbo.fn_CantReferenciasExt('A0')
@@ -812,6 +809,7 @@ WHERE idTrab in (
 )
 RETURN @cantidad
 END
+GO
 
 declare @cantTrabInvs int;
 set @cantTrabInvs = dbo.fn_CantTrbjAniosClave(2015, 2016, 'Popoi')
@@ -888,6 +886,7 @@ BEGIN
 set @ret = @nombre+ ' - Nivel Lugar:'+CONVERT(varchar(1), @nivelLugar)+ ' - Fecha: '+CONVERT(varchar(2), @diaIni)+'/'+CONVERT(varchar(2), @mes)+'/'+CONVERT(varchar(4), @anio)
 RETURN @ret
 END
+GO
 
 declare @uni varchar(300);
 set @uni = dbo.fn_CongresoDeUniArt('UCUDAL')
@@ -1144,7 +1143,7 @@ CREATE TABLE LogInsertAndUpdate (
 )
 GO
 
-ALTER TRIGGER tg_AuditarInsOrUpd
+CREATE TRIGGER tg_AuditarInsOrUpd
 ON Lugares
 AFTER INSERT, UPDATE
 AS
@@ -1178,13 +1177,8 @@ BEGIN
 		END
 
 END
+GO
 
-select * from LogInsertAndUpdate
-select * from Trabajo
-
-update Lugares set nombre = 'Teatro Solis' where idLugar = 1
-INSERT INTO Lugares
-VALUES(6, 'Test Log', 1, 2014, 8, 8, null, 'https://www.dazzlerhoteles.com', 'UBA', 'Revistas');
 
 
 
@@ -1231,6 +1225,7 @@ AND w.idTrab IN(
 	)
 )
 ORDER BY (t.palabra)
+GO
 
 /* c - Mostrar los datos de las universidades y el link a los congresos, 
 de las universidades que han realizado más de 2 congresos de nivel 4, 
@@ -1249,8 +1244,9 @@ AND l.universidad IN (
 AND l.nivelLugar = 4
 AND l.año > YEAR(GETDATE())-5
 AND l.tipoLugar LIKE 'Congresos'
-GROUP BY u.nombre
+GROUP BY u.nombre, l.link
 HAVING COUNT(*) > 2 
+GO
 
 /* d- Obtener para cada investigador el ultimo trabajo 
 que inicio en el cual fue/es autor principal.*/
@@ -1269,28 +1265,14 @@ AND t.idTrab IN
 	AND i.idInvestigador = y.idInvestigador
 	ORDER BY fechaInicio DESC
 )
+GO
 
 /* e - Para cada investigador mostrar, su identificación, 
 nombre, nombre de la universidad a la que pertenece, 
 y la cantidad de trabajos suyos publicados en lugares de nivel 1, 
 de nivel 2, de nivel 3 y de nivel 4, 
 en los últimos 5 años, en la carrera de Ingeniería. */
-
-
-SELECT DISTINCT i.idInvestigador, i.nombre, i.idUniversidad, 
-dbo.fn_CantTrabajoPorNivel(1, i.idInvestigador) as 'Cantidad trabajos nivel 1',
-dbo.fn_CantTrabajoPorNivel(2, i.idInvestigador) as 'Cantidad trabajos nivel 2',
-dbo.fn_CantTrabajoPorNivel(3, i.idInvestigador) as 'Cantidad trabajos nivel 3',
-dbo.fn_CantTrabajoPorNivel(4, i.idInvestigador) as 'Cantidad trabajos nivel 4'
-FROM Investigador i LEFT OUTER JOIN TAutores ta
-ON i.idInvestigador = ta.idInvestigador 
-LEFT OUTER JOIN Trabajo t 
-ON ta.idTrab = t.idTrab
-LEFT OUTER JOIN Lugares l
-ON t.lugarPublic = l.idLugar
-
-
-alter FUNCTION fn_CantTrabajoPorNivel(
+CREATE FUNCTION fn_CantTrabajoPorNivel(
 @nivelLugar int,
 @idInv int
 )
@@ -1309,6 +1291,22 @@ BEGIN
 	AND inv.carrera LIKE 'Ingeniería'
 	RETURN @ret
 END
+GO
+
+SELECT DISTINCT i.idInvestigador, i.nombre, i.idUniversidad, 
+dbo.fn_CantTrabajoPorNivel(1, i.idInvestigador) as 'Cantidad trabajos nivel 1',
+dbo.fn_CantTrabajoPorNivel(2, i.idInvestigador) as 'Cantidad trabajos nivel 2',
+dbo.fn_CantTrabajoPorNivel(3, i.idInvestigador) as 'Cantidad trabajos nivel 3',
+dbo.fn_CantTrabajoPorNivel(4, i.idInvestigador) as 'Cantidad trabajos nivel 4'
+FROM Investigador i LEFT OUTER JOIN TAutores ta
+ON i.idInvestigador = ta.idInvestigador 
+LEFT OUTER JOIN Trabajo t 
+ON ta.idTrab = t.idTrab
+LEFT OUTER JOIN Lugares l
+ON t.lugarPublic = l.idLugar
+GO
+
+
 
 /* f - Para la universidad “ORT” mostrar el identificador de sus investigadores 
 que tienen algún trabajo en el año actual y la cantidad de trabajos 
@@ -1382,6 +1380,7 @@ AND tra.idTrab NOT IN (
 	AND i.idUniversidad = lu.Universidad
 )
 GROUP BY lu.nombre
+GO
 
 select * from View_ListaCongresos
 
@@ -1391,10 +1390,6 @@ para cada tipo de trabajo la fecha de inicio del primer y último trabajo.
 Todas los investigadores deben aparecer en el resultado, 
 aunque no tengan trabajos que cumplan las condiciones.
 */
-
-select * from TAutores
-select * from Investigador
-select * from Trabajo
 
 SELECT i.idInvestigador Investigador, t.tipoTrab 'Tipo de trabajo', MIN(t.fechaInicio), MAX(t.fechaInicio) 
 FROM Investigador i LEFT OUTER JOIN TAutores ta
