@@ -420,11 +420,13 @@ BEGIN
 			@fechaInicio DATE,
 			@fechaFin DATE,
 			@fechaActual DATE
+		
 		SELECT @anio = CAST(año AS VARCHAR(4)) FROM inserted
 		SELECT @mes = CAST(mes AS VARCHAR(2)) FROM inserted
 		SELECT @diaIni = CAST(diaIni AS varchar(2)) FROM inserted		
 		SET @fechaInicio = CONVERT(date, @anio+@mes+@diaIni)
-		IF('Congresos' in (SELECT tipoLugar from inserted)  AND EXISTS (SELECT diaFin FROM inserted))
+		
+		IF(EXISTS (SELECT tipoLugar from inserted WHERE tipoLugar LIKE 'Congresos')  AND EXISTS (SELECT diaFin FROM inserted))
 		BEGIN
 			SELECT @diaFin = CAST(diaFin AS VARCHAR(2)) FROM inserted
 			SET @fechaFin = CONVERT(date, @anio+@mes+@diaFin)
@@ -440,7 +442,7 @@ BEGIN
 				PRINT 'La fecha de inicio debe ser anterior a la fecha fin y ambas deben ser anteriores a la fecha actual.'
 			END				
 		END
-		ELSE IF ('Congresos' in (SELECT tipoLugar from inserted)  AND NOT EXISTS (SELECT diaFin FROM inserted))
+		ELSE IF (EXISTS (SELECT tipoLugar from inserted WHERE tipoLugar LIKE 'Congresos')  AND NOT EXISTS (SELECT diaFin FROM inserted))
 		BEGIN
 			PRINT 'Debe ingresar una fecha para el fin del congreso.'				
 		END
@@ -464,6 +466,7 @@ CREATE INDEX i_investigador_uni ON Investigador(idUniversidad);
 CREATE INDEX i_lugares_uni ON Lugares(universidad);
 CREATE INDEX i_autores_investigador ON TAutores(idInvestigador);
 CREATE INDEX i_trabajo_lugar ON Trabajo(lugarPublic);
+CREATE INDEX i_trabajo_referenciado ON Referencias(idTrabReferenciado);
 CREATE INDEX i_ttags_tags ON TTags(idTag);
 
 
