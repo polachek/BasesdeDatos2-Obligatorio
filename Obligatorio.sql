@@ -597,21 +597,33 @@ VALUES
 
 /*Datos OK*/
 INSERT INTO Tags
-VALUES 
-(1, 'garza'),
-(1, 'cuca'),
-(1, 'venado'),
-(1, 'campo'),
-(1, 'fauna'),
-(1, 'animales'),
-(1, 'silvestre'),
-(1, 'agua'),
-(1, 'ambiente'),
-(1, 'ecología'),
-(1, 'drogas'),
-(1, 'adicciones'),
-(1, 'cultura'),
-(1, 'mayas')
+VALUES (1, 'garza')
+INSERT INTO Tags
+VALUES(1, 'cuca')
+INSERT INTO Tags
+VALUES(1, 'venado')
+INSERT INTO Tags
+VALUES(1, 'campo')
+INSERT INTO Tags
+VALUES(1, 'fauna')
+INSERT INTO Tags
+VALUES(1, 'animales')
+INSERT INTO Tags
+VALUES(1, 'silvestre')
+INSERT INTO Tags
+VALUES(1, 'agua')
+INSERT INTO Tags
+VALUES(1, 'ambiente')
+INSERT INTO Tags
+VALUES(1, 'ecología')
+INSERT INTO Tags
+VALUES(1, 'drogas')
+INSERT INTO Tags
+VALUES(1, 'adicciones')
+INSERT INTO Tags
+VALUES(1, 'cultura')
+INSERT INTO Tags
+VALUES(1, 'mayas')
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TTAGS                                 */
@@ -692,11 +704,8 @@ GO
 declare @ultTrabUni VARCHAR(110);
 set @ultTrabUni = dbo.fn_UltimoTrabajoPorUniv('ORT')
 PRINT @ultTrabUni
-
-select * from Lugares
-select * from Trabajo
-
 GO
+
 /* 4b - Crear una función almacenada que reciba como parámetro un trabajo 
 y devuelva la cantidad de referencias externas que tiene.*/
 
@@ -809,7 +818,6 @@ declare @mensaje varchar(200)
 EXEC spu_UpdateCantTrab 9, @mensaje output
 print @mensaje
 
-select * from Investigador
 
 go
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -1345,6 +1353,7 @@ ON ta.idTrab = t.idTrab
 LEFT OUTER JOIN Lugares l
 ON t.lugarPublic = l.idLugar
 GO
+
 
 
 
