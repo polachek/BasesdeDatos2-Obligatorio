@@ -1623,26 +1623,36 @@ GO
 
 /* a- Realizar una vista que muestre lista de Congresos y 
 para cada uno la cantidad de trabajos publicados que no tienen autores que 
-sean investigadores de la universidad anfitriona del congreso.*/
+sean investigadores de la universidad anfitriona del congreso.
+*/
 
 CREATE VIEW View_ListaCongresos
 AS
-SELECT lu.tipoLugar, COUNT(tra.idTrab) AS 'Cantidad de trabajos'
+SELECT lu.nombre 'Congreso', COUNT(DISTINCT tra.idTrab) AS 'Cantidad de trabajos'
 FROM Lugares lu, Investigador inv, TAutores x, Trabajo tra
 WHERE lu.idLugar = tra.lugarPublic
 AND inv.idInvestigador = x.idInvestigador
 AND tra.idTrab = x.idTrab
+AND lu.tipoLugar LIKE 'Congresos'
 AND tra.idTrab NOT IN (
 	SELECT t.idTrab
 	FROM Investigador i, Trabajo t, TAutores ta, Lugares l
 	WHERE t.idTrab = ta.idTrab
 	AND i.idInvestigador = ta.idInvestigador
-	AND t.lugarPublic = l.idLugar
-	AND i.idUniversidad = inv.idUniversidad
+	AND i.idUniversidad = lu.Universidad
 )
-GROUP BY lu.tipoLugar
+GROUP BY lu.nombre
 
 
 /* b- Realizar una vista que muestre para cada Investigador, 
 para cada tipo de trabajo la fecha de inicio del primer y último trabajo. 
-Todas los investigadores deben aparecer en el resultado, aunque no tengan trabajos que cumplan las condiciones.*/
+Todas los investigadores deben aparecer en el resultado, 
+aunque no tengan trabajos que cumplan las condiciones.
+*/
+
+SELECT i.idInvestigador Investigador, t.tipoTrab 'Tipo de trabajo', MIN(t.fechaInicio), MAX(t.fechaInicio) 
+FROM Investigador i LEFT OUTER JOIN TAutores ta
+ON i.idInvestigador = ta.idInvestigador
+LEFT OUTER JOIN Trabajo t
+ON ta.idTrab = t.idTrab 
+GROUP BY i.idInvestigador, t.tipoTrab
