@@ -191,23 +191,29 @@ GO
 /*-------------------------------------------------------------------------*/
 /*Disparador para generar ID Trabajo */
 
-CREATE TRIGGER trig_idTrab
+ALTER TRIGGER trig_idTrab
 ON Trabajo
 INSTEAD OF INSERT
 AS
 BEGIN
+	IF( NOT EXISTS( Select COUNT(*) From inserted GROUP BY nomTrab having count(*) > 1))
+	BEGIN
+	  DECLARE @ultINS int;
+	  SET @ultINS = (select COUNT(*) from Trabajo where tipoTrab in (select tipoTrab from inserted));
 
-  DECLARE @ultINS int;
-  SET @ultINS = (select COUNT(*) from Trabajo where tipoTrab in (select tipoTrab from inserted));
+	  DECLARE @alphaNumID varchar(10);
+	  SELECT @alphaNumID = UPPER(SUBSTRING(tipoTrab, 1, 1)) from inserted;
 
-  DECLARE @alphaNumID varchar(10);
-  SELECT @alphaNumID = UPPER(SUBSTRING(tipoTrab, 1, 1)) from inserted;
+	  SET @alphaNumID = @alphaNumID + CONVERT(varchar(10), @ultINS);
 
-  SET @alphaNumID = @alphaNumID + CONVERT(varchar(10), @ultINS);
-
-  INSERT INTO Trabajo
-  SELECT nomTrab, descripTrab, tipoTrab, fechaInicio, linkTrab, lugarPublic, @alphaNumID
-  FROM inserted
+	  INSERT INTO Trabajo
+	  SELECT nomTrab, descripTrab, tipoTrab, fechaInicio, linkTrab, lugarPublic, @alphaNumID
+	  FROM inserted
+	END
+    ELSE
+	  BEGIN
+			PRINT 'Se debe realizar de a una insercion or vez'
+	  END
 END
 GO
 
@@ -551,6 +557,7 @@ VALUES
 ('Linda Cibils', 'lcibils@investigadores.com.uy', '48579568', 'Licenciatura en Ciencias Biológicas', 'EDoctor', 5,'Universidad de Amazonas'),
 ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '45129685', 'Licenciatura en Matemáticas', 'EDoctor', 5,'Universidad Federal de Alagoas')
 
+
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TRABAJO                               */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -558,13 +565,24 @@ VALUES
 /* Datos OK */
 INSERT INTO Trabajo
 VALUES
-('Investigacion GARZA CUCA', 'La garza cuca o también denominada garza mora (Ardea cocoi) es un ave nativa del Centro y Sudamérica, se estudia su ambiente y entorno', 'articulo', '2016-04-03', 'https://www.infoanimales.com/informacion-sobre-la-garza-cuca',1, 'id'),
-('Venado de campo', 'Investigacion sobre el venado de campo, uno de los integrantes más característicos de la fauna uruguaya', 'capitulo', '2017-02-01', 'http://blogs.ceibal.edu.uy/formacion/colecciones-de-recursos/venado-de-campo/',2, 'id'),
-('Investigacion sobre el Agua', 'El agua es un bien y un recurso cada vez mas escaso, que debe ser valorado, protegido y recuperado', 'poster', '2017-05-17', 'https://es.slideshare.net/sssanchezayelen/investigacin-sobre-el-agua',3, 'id'),
-('Investigacion sobre las drogas', 'La drogadicción es una enfermedad que consiste en la dependencia de sustancias que afectan el sistema nervioso central y las funciones cerebrales', 'articulo', '2017-05-17', 'https://www.monografias.com/docs/Investigacion-sobre-las-drogas-FKJQBHKYMZ',4, 'id'),
-('Investigacion sobre medio ambiente ', 'El análisis de lo ambiental desde la perspectiva de lo social', 'Otro', '2017-08-20', 'http://cis.ufro.cl/index.php?option=com_content&view=article&id=45&Itemid=34',5, 'id'),
-('Investigacion sobre Cultura maya ', 'La civilización maya es sin duda la más fascinante de las antiguas culturas americanas', 'Otro', '2017-04-28', 'https://www.biografiasyvidas.com/historia/cultura_maya.htm',5, 'id')
+('Investigacion GARZA CUCA', 'La garza cuca o también denominada garza mora (Ardea cocoi) es un ave nativa del Centro y Sudamérica, se estudia su ambiente y entorno', 'articulo', '2016-04-03', 'https://www.infoanimales.com/informacion-sobre-la-garza-cuca',1, 'id')
+INSERT INTO Trabajo
+VALUES
+('Venado de campo', 'Investigacion sobre el venado de campo, uno de los integrantes más característicos de la fauna uruguaya', 'capitulo', '2017-02-01', 'http://blogs.ceibal.edu.uy/formacion/colecciones-de-recursos/venado-de-campo/',2, 'id')
+INSERT INTO Trabajo
+VALUES
+('Investigacion sobre el Agua', 'El agua es un bien y un recurso cada vez mas escaso, que debe ser valorado, protegido y recuperado', 'poster', '2017-05-17', 'https://es.slideshare.net/sssanchezayelen/investigacin-sobre-el-agua',3, 'id')
+INSERT INTO Trabajo
+VALUES
+('Investigacion sobre medio ambiente ', 'El análisis de lo ambiental desde la perspectiva de lo social', 'Otro', '2017-08-20', 'http://cis.ufro.cl/index.php?option=com_content&view=article&id=45&Itemid=34',5, 'id')
 
+
+INSERT INTO Trabajo
+VALUES
+('Investigacion sobre las drogas', 'La drogadicción es una enfermedad que consiste en la dependencia de sustancias que afectan el sistema nervioso central y las funciones cerebrales', 'articulo', '2017-05-17', 'https://www.monografias.com/docs/Investigacion-sobre-las-drogas-FKJQBHKYMZ',4, 'id'),
+('Investigacion sobre Cultura maya ', 'La civilización maya es sin duda la más fascinante de las antiguas culturas americanas', 'Otro', '2017-04-28', 'https://www.biografiasyvidas.com/historia/cultura_maya.htm',5, 'id')
+select * from Trabajo
+delete from Trabajo
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TAGS                                  */
@@ -1011,6 +1029,10 @@ BEGIN
 		 END
 
 	 END
+	 ELSE
+	  BEGIN
+			PRINT 'Se debe realizar de a una insercion or vez'
+	  END
 END
 GO
 
