@@ -408,7 +408,7 @@ GO
 /* Disparador para controlar que diaFin no sea nulo cuando tipolugar tiene 
 valor 'Congresos' en tabla LUGARES*/
 
-alter TRIGGER EvitarDiaFinNulo_LUGARES
+CREATE TRIGGER EvitarDiaFinNulo_LUGARES
 ON Lugares
 INSTEAD OF INSERT
 AS
