@@ -426,7 +426,7 @@ BEGIN
 		SELECT @diaIni = CAST(diaIni AS varchar(2)) FROM inserted		
 		SET @fechaInicio = CONVERT(date, @anio+@mes+@diaIni)
 		
-		IF(EXISTS (SELECT tipoLugar from inserted WHERE tipoLugar LIKE 'Congresos')  AND EXISTS (SELECT diaFin FROM inserted))
+		IF(EXISTS (SELECT tipoLugar from inserted WHERE tipoLugar LIKE 'Congresos')  AND NOT EXISTS (SELECT diaFin FROM inserted WHERE diafin IS NULL))
 		BEGIN
 			SELECT @diaFin = CAST(diaFin AS VARCHAR(2)) FROM inserted
 			SET @fechaFin = CONVERT(date, @anio+@mes+@diaFin)
@@ -442,9 +442,9 @@ BEGIN
 				PRINT 'La fecha de inicio debe ser anterior a la fecha fin y ambas deben ser anteriores a la fecha actual.'
 			END				
 		END
-		ELSE IF (EXISTS (SELECT tipoLugar from inserted WHERE tipoLugar LIKE 'Congresos')  AND NOT EXISTS (SELECT diaFin FROM inserted))
+		ELSE 
 		BEGIN
-			PRINT 'Debe ingresar una fecha para el fin del congreso.'				
+			PRINT 'Todos los congresos deben tener un día fin.'				
 		END
 
 END
