@@ -719,8 +719,6 @@ set @cantRef = dbo.fn_CantReferenciasExt('A0')
 PRINT @cantRef
 go
 
-select * from Referencias
-
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
@@ -1298,7 +1296,7 @@ nombre, nombre de la universidad a la que pertenece,
 y la cantidad de trabajos suyos publicados en lugares de nivel 1, 
 de nivel 2, de nivel 3 y de nivel 4, 
 en los últimos 5 años, en la carrera de Ingeniería. */
-ALTER FUNCTION fn_CantTrabajoPorNivel(
+CREATE FUNCTION fn_CantTrabajoPorNivel(
 @nivelLugar int,
 @idInv int
 )
@@ -1414,7 +1412,7 @@ AND tra.idTrab NOT IN (
 GROUP BY lu.nombre
 GO
 
-select * from View_ListaCongresos
+SELECT * FROM View_ListaCongresos
 
 
 
@@ -1423,15 +1421,17 @@ para cada tipo de trabajo la fecha de inicio del primer y último trabajo.
 Todas los investigadores deben aparecer en el resultado, 
 aunque no tengan trabajos que cumplan las condiciones.
 */
-
+CREATE VIEW View_TrabajoInvestigadores
+AS
 SELECT i.idInvestigador Investigador, t.tipoTrab 'Tipo de trabajo', MIN(t.fechaInicio), MAX(t.fechaInicio) 
 FROM Investigador i LEFT OUTER JOIN TAutores ta
 ON i.idInvestigador = ta.idInvestigador
 LEFT OUTER JOIN Trabajo t
 ON ta.idTrab = t.idTrab 
 GROUP BY i.idInvestigador, t.tipoTrab
+GO
 
-go
+SELECT * FROM View_TrabajoInvestigadores
 
 /*########################################################################*/
 /*########################################################################*/
