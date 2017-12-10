@@ -583,9 +583,6 @@ VALUES
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                           Tabla TAUTORES                                 */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-select * from Investigador
-select * from Trabajo
-Select * from Lugares
 
 INSERT INTO TAutores
 VALUES
