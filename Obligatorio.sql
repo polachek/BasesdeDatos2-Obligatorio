@@ -1417,6 +1417,7 @@ GO
 select * from View_ListaCongresos
 
 
+
 /* b- Realizar una vista que muestre para cada Investigador, 
 para cada tipo de trabajo la fecha de inicio del primer y último trabajo. 
 Todas los investigadores deben aparecer en el resultado, 
@@ -1628,7 +1629,5 @@ INSERT INTO Referencias
 VALUES('O2',null)
 GO
 /* Caso a ser rechazado por: se referencia asimismo  */
-/* REGULAR CON TRIGGER
 INSERT INTO Referencias
 VALUES('O2','O2')
-*/
