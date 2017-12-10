@@ -477,8 +477,8 @@ VALUES
 ('Linda Cibils', 'lcibils@investigadores.com.uy', '48579568', 'Licenciatura en Ciencias Biológicas', 'EDoctor', 5,'Universidad de Amazonas'),
 ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '45129685', 'Licenciatura en Matemáticas', 'EDoctor', 5,'Universidad Federal de Alagoas'),
 ('Guillermo Polachek', 'polachek@ort.edu.uy', '0911111111', 'Ingeniería', 'Doctor', 50,'ORT'),
-('Sebastian Villar', 'villar@uamazonas.edu.uy', '0922222222', 'Ingeniería', 'Doctor', 50,'Universidad de Amazonas')
-
+('Sebastian Villar', 'villar@uamazonas.edu.uy', '0922222222', 'Ingeniería', 'Doctor', 50,'Universidad de Amazonas'),
+('Atuagualpo Galpones', 'atagua@ugmail.com', '093333333', 'Ingeniería', 'Doctor', 3,'ORT')
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TRABAJO                               */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -583,11 +583,16 @@ VALUES
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                           Tabla TAUTORES                                 */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+select * from Investigador
+select * from Trabajo
+Select * from Lugares
 
 INSERT INTO TAutores
 VALUES
 ('A0',1,'autor-ppal'),
 ('A0',5,'autor-sec'),
+('A6',13,'autor-sec'),
+('C1',13,'autor-sec'),
 ('C0',2,'autor-director'),
 ('O1',2,'autor-ppal'),
 ('P0',3,'autor-director'),
@@ -654,7 +659,12 @@ BEGIN
 
 	SELECT @ultTrabajo = idTrab , @nomTrabajo = nomTrab
 	FROM Trabajo tr
-	WHERE tr.fechaInicio in (Select Max(fechaInicio) from Trabajo where lugarPublic IN 
+	WHERE lugarPublic IN 
+	(
+		SELECT idLugar
+		FROM Lugares
+		WHERE universidad = @unaUniversidad
+	)AND tr.fechaInicio in (Select Max(fechaInicio) from Trabajo WHERE lugarPublic IN 
 	(
 		SELECT idLugar
 		FROM Lugares
@@ -668,7 +678,7 @@ END
 GO
 
 declare @ultTrabUni VARCHAR(110);
-set @ultTrabUni = dbo.fn_UltimoTrabajoPorUniv('ORT')
+set @ultTrabUni = dbo.fn_UltimoTrabajoPorUniv('UBA')
 PRINT @ultTrabUni
 GO
 
@@ -1266,7 +1276,7 @@ GO
 /* d- Obtener para cada investigador el ultimo trabajo 
 que inicio en el cual fue/es autor principal.*/
 
-SELECT i.idInvestigador
+SELECT i.idInvestigador, ta.idTrab
 FROM Investigador i LEFT OUTER JOIN TAutores ta 
 ON i.idInvestigador = ta.idInvestigador
 LEFT OUTER JOIN Trabajo t 
@@ -1282,12 +1292,13 @@ AND t.idTrab IN
 )
 GO
 
+
 /* e - Para cada investigador mostrar, su identificación, 
 nombre, nombre de la universidad a la que pertenece, 
 y la cantidad de trabajos suyos publicados en lugares de nivel 1, 
 de nivel 2, de nivel 3 y de nivel 4, 
 en los últimos 5 años, en la carrera de Ingeniería. */
-CREATE FUNCTION fn_CantTrabajoPorNivel(
+ALTER FUNCTION fn_CantTrabajoPorNivel(
 @nivelLugar int,
 @idInv int
 )
@@ -1297,17 +1308,16 @@ BEGIN
 	DECLARE @ret int
 	SELECT @ret = COUNT(*)
 	FROM Lugares lu, Investigador inv, TAutores x, Trabajo t
-	WHERE lu.universidad = inv.idUniversidad
-	AND inv.idInvestigador = x.idInvestigador
+	WHERE inv.idInvestigador = x.idInvestigador
 	AND lu.nivelLugar = @nivelLugar
 	AND x.idTrab = t.idTrab
 	AND inv.idInvestigador = @idInv
+	AND t.lugarPublic = lu.idLugar
 	AND YEAR(t.fechaInicio) > YEAR(GETDATE())-5
 	AND inv.carrera LIKE 'Ingeniería'
 	RETURN @ret
 END
 GO
-
 
 SELECT DISTINCT i.idInvestigador, i.nombre, i.idUniversidad, 
 dbo.fn_CantTrabajoPorNivel(1, i.idInvestigador) as 'Cantidad trabajos nivel 1',
@@ -1332,15 +1342,13 @@ En caso de investigadores sin trabajos publicados en estos congresos pero con
 trabajos en proceso el año actual deben aparecer en el resultado.*/
 
 SELECT i.idInvestigador, (
-	SELECT COUNT(*)
-	FROM Lugares lu, Investigador inv, TAutores x, Trabajo tra
+	SELECT COUNT(DISTINCT tra.idTrab)
+	FROM Lugares lu, TAutores x, Trabajo tra
 	WHERE lu.idLugar = tra.lugarPublic
-	AND inv.idInvestigador = x.idInvestigador
+	AND i.idInvestigador = x.idInvestigador
 	AND tra.idTrab = x.idTrab
-	AND inv.idInvestigador = i.idInvestigador
 	AND lu.nivelLugar = 4  
 	AND lu.tipoLugar = 'Congresos'
-	AND inv.idUniversidad LIKE 'ORT'
 ) AS 'Cant. de Trabajos en ORT para Nivel 4'
 FROM Investigador i LEFT OUTER JOIN TAutores ta
 ON i.idInvestigador = ta.idInvestigador
@@ -1348,6 +1356,8 @@ LEFT OUTER JOIN Trabajo t
 ON ta.idTrab = t.idTrab
 WHERE i.idUniversidad LIKE 'ORT'
 AND YEAR(t.fechaInicio) = YEAR(GETDATE())
+GROUP BY i.idInvestigador
+
 
 /* g - Mostrar para cada universidad que tiene trabajos publicados, 
 los datos del último trabajo publicado. 
@@ -1357,6 +1367,10 @@ SELECT DISTINCT U.nombre , dbo.fn_UltimoTrabajoPorUniv(l.universidad) AS 'Datos 
 FROM Trabajo t, Lugares l, Universidad u
 WHERE t.lugarPublic = l.idLugar
 AND U.nombre = L.universidad
+
+select * from Trabajo
+select * from Lugares
+
 
 /* h- Eliminar las palabras claves no usadas en los trabajos.*/
 
