@@ -291,47 +291,9 @@ ADD CONSTRAINT Referencias_FK_TrabRef FOREIGN KEY (idTrabReferenciado)
 REFERENCES Trabajo
 GO
 
-/*-------------------------------------------------------------------------*/
-/* Disparador para que un trabajo no se referencia a sí mismo en la tabla referencias.*/
+ALTER TABLE Referencias
+ADD CONSTRAINT Referencias_Referencia CHECK (idTrab <> idTrabReferenciado)
 
-alter TRIGGER EvitarReferenciaCircular_REFERENCIAS
-ON Referencias
-INSTEAD OF INSERT, UPDATE
-AS
-BEGIN
-	DECLARE @trabajo VARCHAR(10)
-	DECLARE @referencia VARCHAR(10)		
-	SELECT @trabajo = idTrab FROM inserted
-	SELECT @referencia = idTrabReferenciado FROM inserted	
-
-	IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted))
-	 BEGIN
-		IF((select idTrab FROM inserted) <> (select idTrabReferenciado FROM inserted))
-		BEGIN
-			INSERT Referencias
-			VALUES ((select idTrab FROM inserted), (select idTrabReferenciado FROM inserted))
-		END
-		ELSE
-		BEGIN
-			PRINT 'Un trabajo no puede referenciarse a sí mismo.'
-		END
-	 END
-	ELSE
-	 BEGIN
-		IF(@trabajo <> @referencia)
-		 BEGIN
-			UPDATE Referencias
-			SET idTrabReferenciado = @referencia
-			FROM inserted
-			WHERE Referencias.idTrab = @trabajo
-		 END
-		ELSE
-		 BEGIN
-			PRINT 'Un trabajo no puede referenciarse a sí mismo.'
-		 END
-	 END
-END
-GO
 /*-------------------------------------------------------------------------*/
 
 /* LUGARES */
