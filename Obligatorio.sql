@@ -212,7 +212,7 @@ BEGIN
 	END
     ELSE
 	  BEGIN
-			PRINT 'Se debe realizar de a una insercion or vez'
+			PRINT 'No se admiten inserciones múltiples.'
 	  END
 END
 GO
@@ -221,66 +221,17 @@ GO
 
 /* TAGS */
 ALTER TABLE Tags
-ALTER COLUMN idTag INT NOT NULL
+DROP COLUMN idTag
+GO
+
+ALTER TABLE Tags
+ADD idTag INT IDENTITY(1,2) NOT NULL
 GO
 
 ALTER TABLE Tags
 ADD CONSTRAINT Tags_PK PRIMARY KEY (idTag)
 GO
 
-/* Disparador para generar secuenciador autonumérico impar en tabla TAGS*/
-CREATE TRIGGER IdTag_TAGS
-ON Tags
-INSTEAD OF INSERT, UPDATE
-AS
-BEGIN
-	DECLARE @contador INT,
-			@maximo INT	
-    IF( NOT EXISTS( Select COUNT(*) From inserted having count(*) > 1))
-	BEGIN
-		IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted))
-		BEGIN	
-			IF (NOT EXISTS( SELECT * FROM Tags))
-			 BEGIN
-				SET @maximo = 1
-				INSERT Tags
-				SELECT idtag = @maximo, palabra = inserted.palabra
-				FROM inserted
-			 END
-			ELSE
-			 BEGIN
-			  SELECT @maximo = MAX(idtag) FROM Tags
-				IF((@maximo >= 2 AND @maximo%2 = 1) OR @maximo = 1)
-				BEGIN
-					SET @maximo = @maximo + 2
-					INSERT Tags
-					SELECT idtag = @maximo, palabra = inserted.palabra
-					FROM inserted
-				END
-				ELSE IF((@maximo >= 2 AND @maximo%2 = 0))
-				BEGIN
-					SET @maximo = @maximo + 1
-					INSERT Tags
-					SELECT idtag = @maximo, palabra = inserted.palabra
-					FROM inserted
-				END 
-			 END
-		END
-		ELSE IF(EXISTS (SELECT * FROM inserted) AND EXISTS (SELECT * FROM deleted))
-		 BEGIN
-			UPDATE Tags
-			set palabra = inserted.palabra
-			from inserted
-			where Tags.idtag = inserted.idtag
-		 END
-
-		 END
-		 ELSE
-		  BEGIN
-				PRINT 'Se debe realizar de a una insercion or vez'
-		  END	 
-END
-GO
 /*-------------------------------------------------------------------------*/
 
 /* TTAGS */
@@ -343,7 +294,7 @@ GO
 /*-------------------------------------------------------------------------*/
 /* Disparador para que un trabajo no se referencia a sí mismo en la tabla referencias.*/
 
-CREATE TRIGGER EvitarReferenciaCircular_REFERENCIAS
+alter TRIGGER EvitarReferenciaCircular_REFERENCIAS
 ON Referencias
 INSTEAD OF INSERT, UPDATE
 AS
@@ -355,10 +306,10 @@ BEGIN
 
 	IF(EXISTS (SELECT * FROM inserted) AND NOT EXISTS (SELECT * FROM deleted))
 	 BEGIN
-		IF(@trabajo <> @referencia)
+		IF((select idTrab FROM inserted) <> (select idTrabReferenciado FROM inserted))
 		BEGIN
 			INSERT Referencias
-			VALUES (@trabajo, @referencia)
+			VALUES ((select idTrab FROM inserted), (select idTrabReferenciado FROM inserted))
 		END
 		ELSE
 		BEGIN
@@ -540,11 +491,10 @@ VALUES
 INSERT INTO Lugares
 VALUES
 (1, 'Teatro Solis', 4, 2016, 11, 8, null, 'http://www.teatrosolis.org.uy', 'Udelar', 'Revistas'),
-(2, 'LATU', 3, 2015, 11, 9, 13, 'www.latu.org.uy', 'ORT', 'Congresos'),
+(2, 'LATU', 4, 2015, 11, 9, 13, 'www.latu.org.uy', 'ORT', 'Congresos'),
 (3, 'Radisson Victoria Plaza Hotel', 4, 2015, 5, 20, null, 'https://www.radissonblu.com', 'UM', 'Libros'),
 (4, 'Holiday Inn', 2, 2017, 2, 10, 16, 'https://www.ihg.com', 'UCUDAL', 'Congresos'),
-(5, 'Hotel Dazzler', 1, 2014, 8, 8, null, 'https://www.dazzlerhoteles.com', 'UBA', 'Revistas')
-
+(5, 'Hotel Dazzler', 1, 2017, 8, 8, null, 'https://www.dazzlerhoteles.com', 'UBA', 'Revistas')
 
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
@@ -563,8 +513,9 @@ VALUES
 ('Maicol Uriarte', 'muriarte@investigadores.com.uy', '15648524', 'Licenciatura en Bellas Artes', 'EMaestria', 9,'UBA'),
 ('Marianela Ifrán', 'mifran@investigadores.com.uy', '15677425', 'Ingeniería Naval', 'EGrado', 1,'Universidad de Córdoba'),
 ('Linda Cibils', 'lcibils@investigadores.com.uy', '48579568', 'Licenciatura en Ciencias Biológicas', 'EDoctor', 5,'Universidad de Amazonas'),
-('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '45129685', 'Licenciatura en Matemáticas', 'EDoctor', 5,'Universidad Federal de Alagoas')
-
+('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '45129685', 'Licenciatura en Matemáticas', 'EDoctor', 5,'Universidad Federal de Alagoas'),
+('Guillermo Polachek', 'polachek@ort.edu.uy', '0911111111', 'Ingeniería', 'Doctor', 50,'ORT'),
+('Sebastian Villar', 'villar@uamazonas.edu.uy', '0922222222', 'Ingeniería', 'Doctor', 50,'Universidad de Amazonas')
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TRABAJO                               */
@@ -583,13 +534,33 @@ VALUES
 INSERT INTO Trabajo
 VALUES
 ('Investigacion sobre medio ambiente ', 'El análisis de lo ambiental desde la perspectiva de lo social', 'Otro', '2017-08-20', 'http://cis.ufro.cl/index.php?option=com_content&view=article&id=45&Itemid=34',5, 'id')
-
 INSERT INTO Trabajo
 VALUES
 ('Investigacion sobre las drogas', 'La drogadicción es una enfermedad que consiste en la dependencia de sustancias que afectan el sistema nervioso central y las funciones cerebrales', 'articulo', '2017-05-17', 'https://www.monografias.com/docs/Investigacion-sobre-las-drogas-FKJQBHKYMZ',4, 'id')
 INSERT INTO Trabajo
 VALUES
 ('Investigacion sobre Cultura maya ', 'La civilización maya es sin duda la más fascinante de las antiguas culturas americanas', 'Otro', '2017-04-28', 'https://www.biografiasyvidas.com/historia/cultura_maya.htm',5, 'id')
+INSERT INTO Trabajo
+VALUES
+('Investigacion sobre SQL', 'Lenguaje específico del dominio que da acceso a un sistema de gestión de bases de datos relacionales', 'articulo', '2017-12-08', 'https://es.wikipedia.org/wiki/SQL',5, 'id')
+INSERT INTO Trabajo
+VALUES
+('Investigacion sobre XQuery', 'XQuery es un lenguaje de consulta para fuentes de datos XML', 'articulo', '2017-12-07', 'https://es.wikipedia.org/wiki/XQuery',5, 'id')
+INSERT INTO Trabajo
+VALUES
+('Investigacion sobre Bases de Datos Oracle', 'Oracle Database es un sistema de gestión de base de datos de tipo objeto-relacional', 'articulo', '2017-12-06', 'https://es.wikipedia.org/wiki/Oracle_Database',5, 'id')
+INSERT INTO Trabajo
+VALUES
+('Investigacion sobre Bases de Datos', 'Una base de datos o banco de datos es un conjunto de datos pertenecientes a un mismo contexto y almacenados sistemáticamente para su posterior uso', 'capitulo', '2017-12-08', 'https://es.wikipedia.org/wiki/Base_de_datos',5, 'id')
+INSERT INTO Trabajo
+VALUES
+('Investigacion sobre Windows', 'Microsoft Windows es un sistema operativo, es decir, un conjunto de programas que posibilita la administración de los recursos de una computadora', 'articulo', '2017-11-10', 'https://definicion.de/windows/',4, 'id')
+INSERT INTO Trabajo
+VALUES
+('Investigacion sobre SO. Ubuntu', 'Ubuntu es una distribución del sistema operativo GNU/Linux y que se distribuye como software libre', 'articulo', '2017-11-09', 'https://es.wikipedia.org/wiki/Ubuntu',4, 'id')
+INSERT INTO Trabajo
+VALUES
+('Investigacion sobre Sistemas Oerativos', 'Un sistema operativo es el software principal o conjunto de programas de un sistema informático que gestiona los recursos de hardware y provee servicios a los programas de aplicación de software', 'articulo', '2017-11-08', 'https://es.wikipedia.org/wiki/Sistema_operativo',4, 'id')
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TAGS                                  */
@@ -597,33 +568,28 @@ VALUES
 
 /*Datos OK*/
 INSERT INTO Tags
-VALUES (1, 'garza')
-INSERT INTO Tags
-VALUES(1, 'cuca')
-INSERT INTO Tags
-VALUES(1, 'venado')
-INSERT INTO Tags
-VALUES(1, 'campo')
-INSERT INTO Tags
-VALUES(1, 'fauna')
-INSERT INTO Tags
-VALUES(1, 'animales')
-INSERT INTO Tags
-VALUES(1, 'silvestre')
-INSERT INTO Tags
-VALUES(1, 'agua')
-INSERT INTO Tags
-VALUES(1, 'ambiente')
-INSERT INTO Tags
-VALUES(1, 'ecología')
-INSERT INTO Tags
-VALUES(1, 'drogas')
-INSERT INTO Tags
-VALUES(1, 'adicciones')
-INSERT INTO Tags
-VALUES(1, 'cultura')
-INSERT INTO Tags
-VALUES(1, 'mayas')
+VALUES 
+('garza'),
+('cuca'),
+('venado'),
+('campo'),
+('fauna'),
+('animales'),
+('silvestre'),
+('agua'),
+('ambiente'),
+('ecología'),
+('drogas'),
+('adicciones'),
+('cultura'),
+('mayas'),
+('BASE DE DATOS'),
+('sql'),
+('xquery'),
+('oracle'),
+('windows'),
+('ubuntu'),
+('sistema-operativo')
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TTAGS                                 */
@@ -637,7 +603,20 @@ VALUES
 ('O0',7),
 ('O1',9),
 ('P0',15),
-('O1',17)
+('O1',27),
+('A2',29),
+('A3',29),
+('A4',29),
+('C1',29),
+('A2',31),
+('A3',33),
+('A4',35),
+('A5',41),
+('A6',41),
+('A7',41),
+('A5',37),
+('A6',39)
+
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                           Tabla TAUTORES                                 */
@@ -654,17 +633,42 @@ VALUES
 ('A1',6,'autor-ppal'),
 ('A1',9,'autor-sec'),
 ('A0',9,'autor-sec'),
-('A1',8,'autor-director')
+('A1',8,'autor-director'),
+('A2',11,'autor-ppal'),
+('A2',12,'autor-ppal'),
+('A3',11,'autor-ppal'),
+('A3',12,'autor-ppal'),
+('A4',11,'autor-ppal'),
+('A4',12,'autor-ppal'),
+('C1',11,'autor-ppal'),
+('C1',12,'autor-ppal'),
+('A5',11,'autor-ppal'),
+('A5',12,'autor-ppal'),
+('A6',11,'autor-ppal'),
+('A6',12,'autor-ppal'),
+('A7',11,'autor-ppal'),
+('A7',12,'autor-ppal')
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                      Tabla REFERENCIAS                                  */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /* Datos OK */
 INSERT INTO Referencias
-VALUES
-('A0','C0'),
-('P0','O0'),
-('A0','A1')
+VALUES('A0','C0')
+INSERT INTO Referencias
+VALUES('P0','O0')
+INSERT INTO Referencias
+VALUES('A0','A1')
+INSERT INTO Referencias
+VALUES('C1','A2')
+INSERT INTO Referencias
+VALUES('C1','A3')
+INSERT INTO Referencias
+VALUES('C1','A4')
+INSERT INTO Referencias
+VALUES('A7','A6')
+INSERT INTO Referencias
+VALUES('A7','A5')
 
 GO
 /*########################################################################*/
@@ -743,6 +747,8 @@ set @cantRef = dbo.fn_CantReferenciasExt('A0')
 PRINT @cantRef
 go
 
+select * from Referencias
+
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
@@ -772,7 +778,7 @@ END
 GO
 
 declare @cantTrabInvs int;
-set @cantTrabInvs = dbo.fn_CantTrabPublicados(6,8)
+set @cantTrabInvs = dbo.fn_CantTrabPublicados(11,12)
 PRINT @cantTrabInvs
 
 
@@ -856,11 +862,10 @@ END
 GO
 
 declare @cantTrabInvs int;
-set @cantTrabInvs = dbo.fn_CantTrbjAniosClave(2015, 2016, 'Popoi')
+set @cantTrabInvs = dbo.fn_CantTrbjAniosClave(2015, 2016, 'garza')
 PRINT @cantTrabInvs
 
-
-go
+GO
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*
 4.f Crear una función que reciba un tipo de trabajo y devuelva un nuevo identificador para dicho trabajo. */
@@ -889,7 +894,7 @@ END
 GO
 
 declare @nueviTipo varchar(150);
-set @nueviTipo = dbo.fn_NuevoIdentTipoTrabajo('poster')
+set @nueviTipo = dbo.fn_NuevoIdentTipoTrabajo('articulo')
 PRINT @nueviTipo
 GO
 
@@ -1046,7 +1051,7 @@ BEGIN
 	 END
 	 ELSE
 	  BEGIN
-			PRINT 'Se debe realizar de a una insercion or vez'
+			PRINT 'No se admiten inserciones múltiples.'
 	  END
 END
 GO
@@ -1341,6 +1346,7 @@ BEGIN
 END
 GO
 
+
 SELECT DISTINCT i.idInvestigador, i.nombre, i.idUniversidad, 
 dbo.fn_CantTrabajoPorNivel(1, i.idInvestigador) as 'Cantidad trabajos nivel 1',
 dbo.fn_CantTrabajoPorNivel(2, i.idInvestigador) as 'Cantidad trabajos nivel 2',
@@ -1399,6 +1405,7 @@ WHERE idTag NOT IN
 	FROM TTags
 )
 GO
+
 
 /*########################################################################*/
 /*########################################################################*/
