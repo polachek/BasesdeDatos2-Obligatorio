@@ -1420,7 +1420,7 @@ aunque no tengan trabajos que cumplan las condiciones.
 */
 CREATE VIEW View_TrabajoInvestigadores
 AS
-SELECT i.idInvestigador Investigador, t.tipoTrab 'Tipo de trabajo', MIN(t.fechaInicio), MAX(t.fechaInicio) 
+SELECT i.idInvestigador Investigador, t.tipoTrab 'Tipo de trabajo', MIN(t.fechaInicio) as 'Fecha Inicio primer Trabajo', MAX(t.fechaInicio) as 'Fecha Inicio ultimo Trabajo'
 FROM Investigador i LEFT OUTER JOIN TAutores ta
 ON i.idInvestigador = ta.idInvestigador
 LEFT OUTER JOIN Trabajo t
