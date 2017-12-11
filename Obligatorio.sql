@@ -232,6 +232,10 @@ ALTER TABLE Tags
 ADD CONSTRAINT Tags_PK PRIMARY KEY (idTag)
 GO
 
+ALTER TABLE Tags
+ALTER COLUMN palabra varchar(50) NOT NULL
+GO
+
 /*-------------------------------------------------------------------------*/
 
 /* TTAGS */
@@ -1543,18 +1547,12 @@ VALUES ('Marcio Avellanal', 'mavellanal@investigadores.com.uy', '98765432', 'Dco
 
 /*Datos a rechazar*/
 /* Caso a ser rechazado por Descripcion > 200 Caracteres */
-/*
 INSERT INTO Trabajo
 VALUES('Investigacion de como hacer las cosas mal', 'Nor hence hoped her after other known defer his. For county now sister engage had season better had waited. Occasional mrs interested far expression acceptance. Day either mrs talent pulled men rather 201', 'articulo', '2016-04-03', null,1,'P3')
-*/
 
 /* Caso a ser rechazado por tipoTrab no permitido */
 INSERT INTO Trabajo
 VALUES('Investigacion sobre el mal hacer', 'Investigacion sobre cuando las cosas se macen hal', 'resumen', '2016-04-03', 'https://www.google.com.uy',1,'P4')
-
-/* Caso a ser rechazado por Lugar = null */
-INSERT INTO Trabajo
-VALUES('Investigacion sobre el lugar nulo', 'Investigacion sobre la nulinidad del lugar', 'articulo', '2016-04-03', 'https://www.google.com.uy',null,'A4')
 
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                              Tabla TAGS                                  */
@@ -1576,11 +1574,11 @@ VALUES (NULL)
 /*Datos a rechazar*/
 /*Caso a ser rechazado por PK duplicado*/
 INSERT INTO TTags
-VALUES ('O2',27)
+VALUES ('A0',1)
 
 /*Caso a ser rechazado por IdTag inexistente*/
 INSERT INTO TTags
-VALUES ('O2',28)
+VALUES ('A2',98)
 
 /*Caso a ser rechazado por IdTrab inexistente*/
 INSERT INTO TTags
@@ -1594,11 +1592,10 @@ VALUES (27)
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 /*                           Tabla TAUTORES                                 */
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 /*Datos a rechazar*/
 /*Caso a ser rechazado por PK duplicada*/
 INSERT INTO TAutores
-VALUES('A2',8,'autor-sec')
+VALUES('A0',1,'autor-ppal')
 
 /*Caso a ser rechazado por IdTrab null*/
 INSERT INTO TAutores(idInvestigador,rolinvestig)
